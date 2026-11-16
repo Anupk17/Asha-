@@ -1,0 +1,361 @@
+[
+  {
+    "id": "mat_heavy_bleeding",
+    "applies_to": ["pregnant"],
+    "category": "bleeding",
+    "labels": {
+      "en": "Heavy Vaginal Bleeding",
+      "hi": "अत्यधिक रक्तस्राव (खून बहना)",
+      "ta": "கடுமையான ரத்தப்போக்கு",
+      "te": "తీవ్ర రక్తస్రావం",
+      "kn": "ಅತಿಯಾದ ರಕ್ತಸ್ರಾವ",
+      "ml": "കഠിനമായ രക്തസ്രാവം",
+      "mr": "अति रक्तस्राव"
+    },
+    "trigger": {
+      "type": "symptom",
+      "aliases": {
+        "en": ["heavy bleeding", "vaginal bleeding", "bleeding heavily", "blood discharge", "spotting blood", "excessive bleeding"],
+        "hi": ["khoon beh raha", "zyada khoon", "raktsrav", "khoon aana", "khoon gir raha", "bleeding ho rahi"],
+        "hinglish": ["heavy bleeding", "khoon ja raha hai", "bleeding bahut hai", "blood aa raha hai"]
+      }
+    },
+    "required_to_evaluate": [],
+    "severity": "refer_now",
+    "action": "refer_now",
+    "guideline_ref": {
+      "guideline_id": "mohfw_maternal_danger_2017",
+      "section": "Section 2: Antepartum and Postpartum Hemorrhage",
+      "page": "11",
+      "version": "2017"
+    },
+    "reviewed": true,
+    "last_updated": "2026-11-16"
+  },
+  {
+    "id": "mat_severe_headache_vision",
+    "applies_to": ["pregnant"],
+    "category": "neurological_hypertension",
+    "labels": {
+      "en": "Severe Headache with Blurred Vision",
+      "hi": "तीव्र सिरदर्द व धुंधला दिखना",
+      "ta": "கடுமையான தலைவலி மற்றும் மங்கலான பார்வை",
+      "te": "తీవ్ర తలనొప్పి మరియు మసకబారిన చూపు",
+      "kn": "ತೀವ್ರ ತಲೆನೋವು ಮತ್ತು ಮಂದ ದೃಷ್ಟಿ",
+      "ml": "കഠിനമായ തലവേദനയും കാഴ്ച മങ്ങലും",
+      "mr": "तीव्र डोकेदुखी आणि अंधुक दिसणे"
+    },
+    "trigger": {
+      "type": "symptom",
+      "aliases": {
+        "en": ["severe headache", "blurred vision", "blurry vision", "flashing lights", "headache and visual disturbance", "seeing spots"],
+        "hi": ["bahut tez sirdard", "tez sar dard", "dhundhla dikhna", "aankhon ke aage andhera", "sar ghumna", "sir phat raha"],
+        "hinglish": ["severe headache", "sar dard bahut tez", "dhundhla dikh raha hai", "blurry vision hai"]
+      }
+    },
+    "required_to_evaluate": [],
+    "severity": "refer_now",
+    "action": "refer_now",
+    "guideline_ref": {
+      "guideline_id": "mohfw_maternal_danger_2017",
+      "section": "Section 3: Hypertensive Disorders in Pregnancy",
+      "page": "14",
+      "version": "2017"
+    },
+    "reviewed": true,
+    "last_updated": "2026-11-16"
+  },
+  {
+    "id": "mat_convulsions",
+    "applies_to": ["pregnant"],
+    "category": "neurological",
+    "labels": {
+      "en": "Convulsions / Fits in Pregnancy",
+      "hi": "दौरे पड़ना / झटके आना",
+      "ta": "கர்ப்ப காலத்தில் வலிப்பு",
+      "te": "గర్భధారణలో ఫిట్స్ / మూర్ఛ",
+      "kn": "ಗರ್ಭಾವಸ್ಥೆಯಲ್ಲಿ ಫಿಟ್ಸ್ / ಸೆಳೆತ",
+      "ml": "ഗർഭാവസ്ഥയിലെ ഫിറ്റ്സ് / അപസ്മാരം",
+      "mr": "गरोदरपणातील झटके येणे"
+    },
+    "trigger": {
+      "type": "symptom",
+      "aliases": {
+        "en": ["convulsions", "fits", "seizures", "loss of consciousness with fits", "eclampsia fit"],
+        "hi": ["daura padna", "daure aana", "jhatke aana", "behosh hokar jhatke", "mirgi jaisa daura"],
+        "hinglish": ["fits aa rahe hai", "convulsions hue", "daura pada tha", "seizures aaye"]
+      }
+    },
+    "required_to_evaluate": [],
+    "severity": "refer_now",
+    "action": "refer_now",
+    "guideline_ref": {
+      "guideline_id": "mohfw_maternal_danger_2017",
+      "section": "Section 3: Eclampsia Management",
+      "page": "16",
+      "version": "2017"
+    },
+    "reviewed": true,
+    "last_updated": "2026-11-16"
+  },
+  {
+    "id": "mat_breathlessness",
+    "applies_to": ["pregnant"],
+    "category": "respiratory",
+    "labels": {
+      "en": "Difficulty Breathing / Severe Breathlessness",
+      "hi": "सांस लेने में अत्यधिक कठिनाई",
+      "ta": "சுவாசிப்பதில் கடுமையான சிரமம்",
+      "te": "శ్వాస తీసుకోవడంలో తీవ్ర ఇబ్బంది",
+      "kn": "ಉಸಿರಾಟದಲ್ಲಿ ತೀವ್ರ ತೊಂದರೆ",
+      "ml": "ശ്വാസമെടുക്കാൻ കഠിനമായ ബുദ്ധിമുട്ട്",
+      "mr": "श्वास घेण्यास तीव्र अडचण"
+    },
+    "trigger": {
+      "type": "symptom",
+      "aliases": {
+        "en": ["difficulty breathing", "severe breathlessness", "gasping for air", "shortness of breath at rest"],
+        "hi": ["saans phoolna", "saans lene me takleef", "dam ghutna", "saans atakna"],
+        "hinglish": ["saans lene me problem", "heavy breathlessness", "breathless feel kar rahi"]
+      }
+    },
+    "required_to_evaluate": [],
+    "severity": "refer_now",
+    "action": "refer_now",
+    "guideline_ref": {
+      "guideline_id": "mohfw_maternal_danger_2017",
+      "section": "Section 4: Medical Disorders in Pregnancy",
+      "page": "19",
+      "version": "2017"
+    },
+    "reviewed": true,
+    "last_updated": "2026-11-16"
+  },
+  {
+    "id": "mat_high_fever",
+    "applies_to": ["pregnant"],
+    "category": "infection",
+    "labels": {
+      "en": "High Fever in Pregnancy (>= 38.3°C / 101°F)",
+      "hi": "गर्भावस्था में तेज बुखार",
+      "ta": "கர்ப்ப காலத்தில் அதிக காய்ச்சல்",
+      "te": "గర్భధారణలో అధిక జ్వరం",
+      "kn": "ಗರ್ಭಾವಸ್ಥೆಯಲ್ಲಿ ಅಧಿಕ ಜ್ವರ",
+      "ml": "ഗർഭാവസ്ഥയിലെ കടുത്ത പനി",
+      "mr": "गरोदरपणात तीव्र ताप"
+    },
+    "trigger": {
+      "type": "measurement",
+      "field": "temperature_c",
+      "operator": ">=",
+      "value": 38.3,
+      "unit": "celsius"
+    },
+    "required_to_evaluate": ["temperature_c"],
+    "severity": "refer_now",
+    "action": "refer_now",
+    "guideline_ref": {
+      "guideline_id": "mohfw_maternal_danger_2017",
+      "section": "Section 5: Puerperal Sepsis and Maternal Infections",
+      "page": "22",
+      "version": "2017"
+    },
+    "reviewed": true,
+    "last_updated": "2026-11-16"
+  },
+  {
+    "id": "nb_fast_breathing",
+    "applies_to": ["newborn"],
+    "category": "respiratory",
+    "labels": {
+      "en": "Newborn Fast Breathing (>= 60 breaths/min)",
+      "hi": "नवजात में तेज सांस (>= 60 प्रति मिनट)",
+      "ta": "பச்சிளங்குழந்தை வேகமான சுவாசம் (>= 60)",
+      "te": "నవజాత శిశువులో వేగవంతమైన శ్వాస (>= 60)",
+      "kn": "ನವಜಾತ ಶಿಶುವಿನಲ್ಲಿ ವೇಗದ ಉಸಿರಾಟ (>= 60)",
+      "ml": "നവജാതശിശുവിൽ വേഗത്തിലുള്ള ശ്വാസോച്ഛ്വാസം (>= 60)",
+      "mr": "नवजात बाळाचा वेगवान श्वास (>= ६०)"
+    },
+    "trigger": {
+      "type": "measurement",
+      "field": "breaths_per_min",
+      "operator": ">=",
+      "value": 60,
+      "unit": "breaths_per_min"
+    },
+    "required_to_evaluate": ["breaths_per_min"],
+    "severity": "refer_now",
+    "action": "refer_now",
+    "guideline_ref": {
+      "guideline_id": "mohfw_hbnc_2014",
+      "section": "Assessment of Sepsis/Pneumonia in Young Infant",
+      "page": "18",
+      "version": "2014"
+    },
+    "reviewed": true,
+    "last_updated": "2026-11-16"
+  },
+  {
+    "id": "nb_chest_indrawing",
+    "applies_to": ["newborn"],
+    "category": "respiratory",
+    "labels": {
+      "en": "Severe Chest Indrawing in Newborn",
+      "hi": "नवजात में सीने का गहरा धंसना",
+      "ta": "மார்பு உள்வாங்குதல்",
+      "te": "ఛాతీ లోపలికి లాగబడటం",
+      "kn": "ಎದೆ ಒಳಕ್ಕೆ ಎಳೆಯುವುದು",
+      "ml": "നെഞ്ച് ഉള്ളിലേക്ക് വലിയുന്നത്",
+      "mr": "छाती खोलवर खचणे"
+    },
+    "trigger": {
+      "type": "symptom",
+      "aliases": {
+        "en": ["chest indrawing", "severe chest indrawing", "lower chest drawing in", "subcostal retractions", "ribs sucking in"],
+        "hi": ["seena dhans raha", "chhati dhansna", "pasli chalna", "pasliyan chal rahi hai", "chhati andar kheench rahi"],
+        "hinglish": ["chest indrawing", "chhati andar ja rahi hai", "pasli chal rahi"]
+      }
+    },
+    "required_to_evaluate": [],
+    "severity": "refer_now",
+    "action": "refer_now",
+    "guideline_ref": {
+      "guideline_id": "mohfw_hbnc_2014",
+      "section": "Clinical Signs of Respiratory Distress",
+      "page": "19",
+      "version": "2014"
+    },
+    "reviewed": true,
+    "last_updated": "2026-11-16"
+  },
+  {
+    "id": "nb_unable_to_feed",
+    "applies_to": ["newborn"],
+    "category": "feeding",
+    "labels": {
+      "en": "Newborn Unable to Feed / Poor Sucking",
+      "hi": "नवजात शिशु दूध नहीं पी पा रहा",
+      "ta": "பால் குடிக்க இயலாமை / தாய்ப்பால் உறிஞ்சாமை",
+      "te": "పాలు తాగలేకపోవడం / చప్పరించకపోవడం",
+      "kn": "ಹಾಲು ಕುಡಿಯಲು ಅಸಮರ್ಥತೆ",
+      "ml": "മുലപ്പാൽ കുടിക്കാൻ കഴിയാത്ത അവസ്ഥ",
+      "mr": "बाळ दूध पित नाही"
+    },
+    "trigger": {
+      "type": "symptom",
+      "aliases": {
+        "en": ["unable to feed", "not feeding", "cannot suck", "stopped breastfeeding", "refusing milk", "poor feeding"],
+        "hi": ["doodh nahi pee raha", "doodh chhod diya", "stanpaan nahi kar raha", "bachha peeta nahi", "kamjor choosna"],
+        "hinglish": ["feeding nahi le raha", "doodh nahi pi pa raha", "feed refuse kar raha", "unable to suck"]
+      }
+    },
+    "required_to_evaluate": [],
+    "severity": "refer_now",
+    "action": "refer_now",
+    "guideline_ref": {
+      "guideline_id": "mohfw_hbnc_2014",
+      "section": "Feeding Assessment and Danger Signs",
+      "page": "20",
+      "version": "2014"
+    },
+    "reviewed": true,
+    "last_updated": "2026-11-16"
+  },
+  {
+    "id": "nb_hypothermia",
+    "applies_to": ["newborn"],
+    "category": "thermal",
+    "labels": {
+      "en": "Newborn Hypothermia (Temp < 35.5°C / 95.9°F)",
+      "hi": "नवजात में अत्यधिक ठंडा शरीर (हाइपोथर्मिया)",
+      "ta": "உடல் வெப்பநிலை மிகவும் குறைதல்",
+      "te": "శరీరం చల్లబడిపోవడం",
+      "kn": "ದೇಹ ತಣ್ಣಗಾಗುವುದು",
+      "ml": "ശരീരം വല്ലാതെ തണുത്തുപോകുന്നത്",
+      "mr": "बाळाचे शरीर खूप थंड पडणे"
+    },
+    "trigger": {
+      "type": "measurement",
+      "field": "temperature_c",
+      "operator": "<",
+      "value": 35.5,
+      "unit": "celsius"
+    },
+    "required_to_evaluate": ["temperature_c"],
+    "severity": "refer_now",
+    "action": "refer_now",
+    "guideline_ref": {
+      "guideline_id": "mohfw_hbnc_2014",
+      "section": "Thermal Protection and Temperature Monitoring",
+      "page": "21",
+      "version": "2014"
+    },
+    "reviewed": true,
+    "last_updated": "2026-11-16"
+  },
+  {
+    "id": "nb_fever",
+    "applies_to": ["newborn"],
+    "category": "infection",
+    "labels": {
+      "en": "Newborn High Temperature (>= 37.5°C / 99.5°F)",
+      "hi": "नवजात में तेज बुखार (शरीर गर्म होना)",
+      "ta": "பச்சிளங்குழந்தை காய்ச்சல்",
+      "te": "నవజాత శిశువులో జ్వరం",
+      "kn": "ನವಜಾತ ಶಿಶುವಿನಲ್ಲಿ ಜ್ವರ",
+      "ml": "നവജാതശിശുവിലെ പനി",
+      "mr": "नवजात बाळाला ताप येणे"
+    },
+    "trigger": {
+      "type": "measurement",
+      "field": "temperature_c",
+      "operator": ">=",
+      "value": 37.5,
+      "unit": "celsius"
+    },
+    "required_to_evaluate": ["temperature_c"],
+    "severity": "refer_now",
+    "action": "refer_now",
+    "guideline_ref": {
+      "guideline_id": "mohfw_hbnc_2014",
+      "section": "Detection of Infection in Newborns",
+      "page": "21",
+      "version": "2014"
+    },
+    "reviewed": true,
+    "last_updated": "2026-11-16"
+  },
+  {
+    "id": "nb_low_birth_weight",
+    "applies_to": ["newborn"],
+    "category": "growth",
+    "labels": {
+      "en": "Very Low Birth Weight (< 2000g / 2.0kg)",
+      "hi": "नवजात का बहुत कम वजन (< 2.0 किग्रा)",
+      "ta": "மிகக் குறைந்த பிறப்பு எடை (< 2.0 கிகி)",
+      "te": "చాలా తక్కువ జనన బరువు (< 2.0 కిలోలు)",
+      "kn": "ಅತಿ ಕಡಿಮೆ ಜನನ ತೂಕ (< 2.0 ಕೆಜಿ)",
+      "ml": "കുറഞ്ഞ ജനന ഭാരം (< 2.0 കിലോ)",
+      "mr": "जन्माचे अतिशय कमी वजन (< २.० किलो)"
+    },
+    "trigger": {
+      "type": "measurement",
+      "field": "weight_kg",
+      "operator": "<",
+      "value": 2.0,
+      "unit": "kg"
+    },
+    "required_to_evaluate": ["weight_kg"],
+    "severity": "refer_now",
+    "action": "refer_now",
+    "guideline_ref": {
+      "guideline_id": "mohfw_hbnc_2014",
+      "section": "Care of Small and Low Birth Weight Babies",
+      "page": "25",
+      "version": "2014"
+    },
+    "reviewed": true,
+    "last_updated": "2026-11-16"
+  }
+]
+

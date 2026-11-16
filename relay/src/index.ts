@@ -7,6 +7,7 @@ import { verifyIdToken } from './auth.js';
 import { userRateLimiter } from './rateLimit.js';
 import { GnaniSttSession } from './gnaniStt.js';
 import { GnaniTtsStreamer } from './gnaniTts.js';
+import { extractRecord } from './extract.js';
 
 const app = express();
 
@@ -33,6 +34,44 @@ app.get('/health', (_req, res) => {
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
   });
+});
+
+// POST /extract
+app.post('/extract', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+  if (!token) {
+    return res.status(401).json({ error: 'Missing authentication token' });
+  }
+
+  const auth = await verifyIdToken(token);
+  if (!auth) {
+    return res.status(401).json({ error: 'Unauthorized token' });
+  }
+
+  const allowed = userRateLimiter.check(auth.uid);
+  if (!allowed) {
+    return res.status(429).json({ error: 'Rate limit exceeded' });
+  }
+
+  const { transcript, beneficiaryType, currentRecord, language } = req.body;
+  if (!transcript || typeof transcript !== 'string') {
+    return res.status(400).json({ error: 'Invalid or missing transcript' });
+  }
+
+  try {
+    const result = await extractRecord({
+      transcript,
+      beneficiaryType,
+      currentRecord,
+      language,
+    });
+    return res.json(result);
+  } catch (err: any) {
+    console.error('Extraction error:', err);
+    return res.status(500).json({ error: err.message || 'Internal extraction failure' });
+  }
 });
 
 const server = http.createServer(app);
