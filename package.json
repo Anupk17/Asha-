@@ -1,0 +1,21 @@
+{
+  "name": "asha-voice-register",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ASHA Voice Register - Voice-first Android app for ASHA workers",
+  "workspaces": [
+    "shared",
+    "relay",
+    "app"
+  ],
+  "scripts": {
+    "dev:app": "npm --workspace=app run dev",
+    "dev:relay": "npm --workspace=relay run dev",
+    "build": "npm --workspace=shared run build && npm --workspace=relay run build && npm --workspace=app run build",
+    "test": "npm --workspace=shared test && npm --workspace=relay test && npm --workspace=app test"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}
+

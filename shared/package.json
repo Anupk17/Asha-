@@ -1,0 +1,20 @@
+{
+  "name": "@asha/shared",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "test": "node --test",
+    "rules:print": "node scripts/print_rules.mjs",
+    "rules:validate": "node scripts/validate_rules.mjs"
+  },
+  "dependencies": {
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}
+

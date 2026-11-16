@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-teal-900: #0B4F4A;
+  --color-teal-700: #136B64;
+  --color-teal-100: #E4EFEC;
+  --color-saffron-500: #E8833A;
+  --color-saffron-100: #FBE3CF;
+  --color-cream: #FAF6EE;
+  --color-surface: #FFFFFF;
+  --color-ink: #1F2A2A;
+  --color-muted: #5B6B6A;
+  --color-line: #D9D3C5;
+  --color-danger: #C0392B;
+  --color-success: #2E7D4F;
+}
+
+body {
+  font-family: 'Noto Sans', 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+/* 56px minimum touch targets */
+button, a, input, select {
+  min-height: 48px;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 1.8s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
