@@ -3,8 +3,9 @@ import { Banner } from '../components/ui/Banner';
 import { FieldRow } from '../components/ui/FieldRow';
 import { Button } from '../components/ui/Button';
 import { Chip } from '../components/ui/Chip';
-import { Volume2, CheckCircle2, RotateCcw, AlertTriangle, User, Calendar, Scale, Syringe, Thermometer } from 'lucide-react';
+import { Volume2, CheckCircle2, RotateCcw, AlertTriangle, User, Calendar, Scale, Syringe, Thermometer, Wind } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
+import { useAgentStore } from '../store/agentStore';
 import { getT } from '../i18n';
 import { getLocalizedBeneficiaryName, getLocalizedVillageName, getLocalizedTaskType } from '../i18n/localize';
 
@@ -19,141 +20,164 @@ export const ConfirmScreen: React.FC<ConfirmScreenProps> = ({
 }) => {
   const { language } = useAppStore();
   const t = getT(language);
+  const { draftRecord, agentSpokenText, recentlyEditedField, updateDraftField, confirmAndSave, reRecord } = useAgentStore();
 
-  const dangerSignText: Record<string, string> = {
-    en: 'Severe Headache / Blurred Vision (High BP Alert)',
-    hi: 'तीव्र सिरदर्द / धुंधला दिखना (हाई BP लक्षण)',
-    ta: 'கடுமையான தலைவலி / பார்வை மங்குதல் (உயர் ரத்த அழுத்தம்)',
-    te: 'తీవ్ర తలనొప్పి / కంటి చూపు మసకబారడం (హై BP)',
-    kn: 'ತೀವ್ರ ತಲೆನೋವು / ಮಂದ ದೃಷ್ಟಿ (ಅಧಿಕ ರಕ್ತದೊತ್ತಡ)',
-    ml: 'കഠിനമായ തലവേദന / കാഴ്ച മങ്ങൽ (ഉയർന്ന രക്തസമ്മർദ്ദം)',
-    mr: 'तीव्र डोकेदुखी / अंधुक दिसणे (उच्च रक्तदाब)',
+  const [editingModalField, setEditingModalField] = useState<string | null>(null);
+  const [modalInputValue, setModalInputValue] = useState<string>('');
+
+  const hasDanger = (draftRecord.danger_flags?.length || 0) > 0;
+  const hasUnknowns = (draftRecord.danger_unknowns?.length || 0) > 0;
+
+  const localizedName = getLocalizedBeneficiaryName(
+    draftRecord.beneficiary_code || '',
+    draftRecord.beneficiary_name || 'Beneficiary',
+    language
+  );
+  const localizedVillage = getLocalizedVillageName(draftRecord.village || 'Rampur', language);
+  const localizedVisitType = getLocalizedTaskType(draftRecord.visit_type || 'ANC', language);
+
+  const handleOpenEdit = (field: string, currentVal: any) => {
+    setEditingModalField(field);
+    setModalInputValue(currentVal !== null && currentVal !== undefined ? String(currentVal) : '');
   };
 
-  const unknownItemText: Record<string, string> = {
-    en: 'Temperature not measured in Fahrenheit',
-    hi: 'तापमान डिग्री फारेनहाइट में नहीं नापा',
-    ta: 'வெப்பநிலை ஃபாரன்ஹீட்டில் அளவிடப்படவில்லை',
-    te: 'ఉష్ణోగ్రత ఫారెన్‌హీట్‌లో కొలవబడలేదు',
-    kn: 'ತಾಪಮಾನವನ್ನು ಫ್ಯಾರನ್‌ಹೀಟ್‌ನಲ್ಲಿ ಅಳೆಯಲಾಗಿಲ್ಲ',
-    ml: 'താപനില ഫാരൻഹീറ്റിൽ അളന്നിട്ടില്ല',
-    mr: 'तापमान फॅरेनहाइटमध्ये मोजले नाही',
+  const handleSaveModal = () => {
+    if (editingModalField) {
+      let parsedVal: any = modalInputValue;
+      if (['weight_kg', 'temperature_c', 'breaths_per_min'].includes(editingModalField)) {
+        parsedVal = parseFloat(modalInputValue) || null;
+      }
+      updateDraftField(editingModalField as any, parsedVal);
+      setEditingModalField(null);
+    }
   };
 
-  const [formData] = useState({
-    beneficiary_name: 'Pooja Kumari',
-    beneficiary_code: 'SYN-0003',
-    village: 'Kishanpur',
-    visit_type: 'ANC Checkup 3',
-    weight_kg: 58.0,
-    temperature_c: 37.2,
-    breaths_per_min: 22,
-    vaccinations_due: 'TT 2 Booster',
-    next_visit_date: '2026-11-20',
-  });
-
-  const [hasDanger] = useState(true);
-  const [editedField, setEditedField] = useState<string | null>('weight_kg');
-
-  const handleEdit = (fieldName: string) => {
-    setEditedField(fieldName);
-    setTimeout(() => setEditedField(null), 2000);
+  const handleConfirmSave = async () => {
+    const success = await confirmAndSave();
+    if (success) {
+      onSave(draftRecord);
+    }
   };
 
-  const localizedName = getLocalizedBeneficiaryName(formData.beneficiary_code, formData.beneficiary_name, language);
-  const localizedVillage = getLocalizedVillageName(formData.village, language);
-  const localizedVisitType = getLocalizedTaskType(formData.visit_type, language);
+  const handleReRecord = () => {
+    reRecord();
+    onRetake();
+  };
 
   return (
     <div className="pb-24 pt-4 px-4 max-w-md mx-auto space-y-4">
-      {/* Danger Sign Banner at the very top if flagged */}
+      {/* Danger Sign Banner at the top if flagged */}
       {hasDanger && (
         <Banner
           type="danger"
           title={t.confirm.dangerAlertTitle}
-          message={t.confirm.dangerAlertMsg}
-          guidelineSource={t.confirm.guidelineRefTag}
+          message={`${t.confirm.dangerAlertMsg} (${draftRecord.danger_flags.join(', ')})`}
+          guidelineSource="MoHFW Guidelines (Immediate Referral Required)"
         />
       )}
 
-      {/* Readback voice prompt notice */}
-      <div className="flex items-center justify-between p-3 rounded-card bg-teal-100 text-teal-900 border border-teal-700/20 text-xs">
-        <div className="flex items-center gap-2">
-          <Volume2 size={18} className="text-teal-900 shrink-0" />
-          <span>{t.confirm.readbackNotice}</span>
+      {/* Spoken Agent Dialogue / Readback Notice */}
+      <div className="flex items-start justify-between p-3 rounded-card bg-teal-100 text-teal-900 border border-teal-700/20 text-xs">
+        <div className="flex items-start gap-2">
+          <Volume2 size={18} className="text-teal-900 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-bold block mb-0.5">Spoken Readback</span>
+            <p className="line-clamp-2">{agentSpokenText || t.confirm.readbackNotice}</p>
+          </div>
         </div>
         <button
           type="button"
           onClick={() => {}}
-          className="text-teal-900 font-bold underline ml-2 hover:opacity-80"
+          className="text-teal-900 font-bold underline ml-2 shrink-0 hover:opacity-80"
         >
           {t.confirm.listenAgain}
         </button>
       </div>
 
       {/* Unknown / Not checked chips */}
-      <div className="space-y-1.5">
-        <div className="text-xs font-semibold text-muted">{t.confirm.notCheckedTitle}</div>
-        <div className="flex flex-wrap gap-1.5">
-          <Chip variant="neutral" size="sm">
-            ⚠️ {unknownItemText[language] || unknownItemText.en}
-          </Chip>
+      {hasUnknowns && (
+        <div className="space-y-1.5">
+          <div className="text-xs font-semibold text-muted">{t.confirm.notCheckedTitle}</div>
+          <div className="flex flex-wrap gap-1.5">
+            {draftRecord.danger_unknowns.map((unk, idx) => (
+              <Chip key={idx} variant="neutral" size="sm">
+                ⚠️ {unk.replace(/_/g, ' ')} not checked
+              </Chip>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Form Field Rows */}
+      {/* Form Field Rows with Tap-to-Edit */}
       <div className="space-y-2">
         <FieldRow
           label={t.confirm.beneficiaryLabel}
-          value={`${localizedName} (${formData.beneficiary_code}) - ${localizedVillage}`}
+          value={`${localizedName} (${draftRecord.beneficiary_code || 'SYN-0001'}) - ${localizedVillage}`}
           icon={<User size={18} />}
-          onTap={() => handleEdit('beneficiary')}
+          onTap={() => handleOpenEdit('beneficiary_name', draftRecord.beneficiary_name)}
         />
 
         <FieldRow
           label={t.confirm.visitTypeLabel}
           value={localizedVisitType}
           icon={<Calendar size={18} />}
-          onTap={() => handleEdit('visit_type')}
+          onTap={() => handleOpenEdit('visit_type', draftRecord.visit_type)}
         />
 
         <FieldRow
           label={t.confirm.weightLabel}
-          value={formData.weight_kg}
-          unit="kg"
-          isEdited={editedField === 'weight_kg'}
+          value={draftRecord.weight_kg ?? 'Not recorded'}
+          unit={draftRecord.weight_kg ? 'kg' : undefined}
+          isEdited={recentlyEditedField === 'weight_kg'}
           icon={<Scale size={18} />}
-          onTap={() => handleEdit('weight_kg')}
+          onTap={() => handleOpenEdit('weight_kg', draftRecord.weight_kg)}
         />
 
         <FieldRow
           label={t.confirm.tempLabel}
-          value={formData.temperature_c}
-          unit="°C"
+          value={draftRecord.temperature_c ?? 'Not measured'}
+          unit={draftRecord.temperature_c ? '°C' : undefined}
+          isEdited={recentlyEditedField === 'temperature_c'}
           icon={<Thermometer size={18} />}
-          onTap={() => handleEdit('temperature')}
+          onTap={() => handleOpenEdit('temperature_c', draftRecord.temperature_c)}
+        />
+
+        <FieldRow
+          label="Breaths per Minute"
+          value={draftRecord.breaths_per_min ?? 'Not counted'}
+          unit={draftRecord.breaths_per_min ? '/min' : undefined}
+          isEdited={recentlyEditedField === 'breaths_per_min'}
+          icon={<Wind size={18} />}
+          onTap={() => handleOpenEdit('breaths_per_min', draftRecord.breaths_per_min)}
         />
 
         <FieldRow
           label={t.confirm.vaccinationsLabel}
-          value={formData.vaccinations_due}
+          value={
+            draftRecord.vaccinations_due && draftRecord.vaccinations_due.length > 0
+              ? draftRecord.vaccinations_due.join(', ')
+              : 'None due'
+          }
           icon={<Syringe size={18} />}
-          onTap={() => handleEdit('vaccinations')}
+          onTap={() => handleOpenEdit('vaccinations_due', draftRecord.vaccinations_due.join(', '))}
         />
 
         <FieldRow
           label={t.confirm.nextVisitDateLabel}
-          value={formData.next_visit_date}
+          value={draftRecord.next_visit_date || 'Not scheduled'}
+          isEdited={recentlyEditedField === 'next_visit_date'}
           icon={<Calendar size={18} />}
-          onTap={() => handleEdit('next_date')}
+          onTap={() => handleOpenEdit('next_visit_date', draftRecord.next_visit_date)}
         />
 
-        <FieldRow
-          label={t.confirm.dangerSignsLabel}
-          value={dangerSignText[language] || dangerSignText.en}
-          isDanger={true}
-          icon={<AlertTriangle size={18} className="text-danger" />}
-        />
+        {hasDanger && (
+          <FieldRow
+            label={t.confirm.dangerSignsLabel}
+            value={draftRecord.danger_flags.join(', ')}
+            isDanger={true}
+            icon={<AlertTriangle size={18} className="text-danger" />}
+          />
+        )}
       </div>
 
       {/* Action Buttons */}
@@ -163,7 +187,7 @@ export const ConfirmScreen: React.FC<ConfirmScreenProps> = ({
           size="lg"
           fullWidth
           icon={<CheckCircle2 size={22} />}
-          onClick={() => onSave(formData)}
+          onClick={handleConfirmSave}
         >
           {t.confirm.confirmAndSave}
         </Button>
@@ -173,11 +197,37 @@ export const ConfirmScreen: React.FC<ConfirmScreenProps> = ({
           size="md"
           fullWidth
           icon={<RotateCcw size={18} />}
-          onClick={onRetake}
+          onClick={handleReRecord}
         >
           {t.confirm.reRecord}
         </Button>
       </div>
+
+      {/* Tap-to-Edit Modal */}
+      {editingModalField && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-surface rounded-card p-5 w-full max-w-sm border border-line space-y-4 shadow-xl">
+            <h3 className="font-bold text-base text-ink">
+              Edit {editingModalField.replace(/_/g, ' ')}
+            </h3>
+            <input
+              type="text"
+              value={modalInputValue}
+              onChange={(e) => setModalInputValue(e.target.value)}
+              className="w-full px-3 py-2 border border-line rounded-lg text-sm bg-cream focus:outline-none focus:border-teal-700"
+              autoFocus
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="secondary" size="sm" onClick={() => setEditingModalField(null)}>
+                Cancel
+              </Button>
+              <Button variant="primary" size="sm" onClick={handleSaveModal}>
+                Save Field
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -32,11 +32,12 @@ const WORD_TO_DIGIT: Record<string, number> = {
   twentyfive: 25, pachchees: 25,
   thirty: 30, tees: 30,
   thirtyfive: 35, paitis: 35,
+  thirtyfour: 34, chauthis: 34, chautees: 34,
   forty: 40, chalees: 40,
   fortyfive: 45, paitalis: 45,
-  fifty: 50, pachas: 50,
+  fifty: 50, pachas: 50, pachaas: 50,
   fiftyfive: 55, pachpan: 55,
-  sixty: 60, saath: 60,
+  sixty: 60, saath: 60, saanth: 60,
   sixtyfive: 65, painsath: 65,
   seventy: 70, sattar: 70,
   eighty: 80, assi: 80,
@@ -48,13 +49,16 @@ export function parseSpokenNumber(text: string): number | null {
   if (!text) return null;
   const clean = text.toLowerCase().trim();
 
-  // 1. Direct standard float/integer match
-  const directMatch = clean.match(/(\d+(\.\d+)?)/);
-  if (directMatch) {
+  // 1. Spoken decimal normalization: "3 point 1", "3 dashamlav 1", "3 dot 1" -> "3.1"
+  const normalized = clean.replace(/(\d+)\s*(?:point|dashamlav|dot)\s*(\d+)/g, '$1.$2');
+
+  // 2. Direct standard float/integer match
+  const directMatch = normalized.match(/(\d+\.\d+|\d+)/);
+  if (directMatch && !normalized.includes('point') && !normalized.includes('dashamlav')) {
     return parseFloat(directMatch[1]);
   }
 
-  // 2. Point / Decimal spoken words (e.g. "do point aath", "two point eight")
+  // 3. Point / Decimal spoken words (e.g. "do point aath", "two point eight")
   if (clean.includes('point') || clean.includes('dashamlav')) {
     const parts = clean.split(/point|dashamlav/);
     if (parts.length === 2) {
@@ -66,7 +70,7 @@ export function parseSpokenNumber(text: string): number | null {
     }
   }
 
-  // 3. Spoken compounds (e.g. "teen sau" -> 300, "one hundred point four")
+  // 4. Spoken compounds (e.g. "teen sau" -> 300, "one hundred point four")
   const tokens = clean.split(/\s+/);
   let total = 0;
   let current = 0;
@@ -124,3 +128,9 @@ export function validateMeasurementSanity(
   return { isValid: true };
 }
 
+export function isClinicallyValid(
+  field: 'weight_kg' | 'temperature_c' | 'breaths_per_min',
+  val: number
+): boolean {
+  return validateMeasurementSanity(field, val).isValid;
+}

@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import dangerSignsData from './danger_signs.json' with { type: 'json' };
-import guidelinesData from './guidelines.json' with { type: 'json' };
+import dangerSignsData from './danger_signs.json';
+import guidelinesData from './guidelines.json';
 import { BeneficiaryType } from '../index.js';
 
 export const GuidelineRefSchema = z.object({
@@ -208,4 +208,3 @@ export function printClinicalRulesReviewTable(): string {
     ...rows,
   ].join('\n');
 }
-

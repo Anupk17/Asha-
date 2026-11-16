@@ -98,131 +98,140 @@ wss.on('connection', (ws: WebSocket, req) => {
     isAuthenticated: false,
     sttSession: null,
     ttsStreamer: null,
-    currentLanguage: 'hi',
+    currentLanguage: 'en',
     speechEndTimestamp: null,
   };
 
-  // If token is provided in query param on handshake, authenticate immediately
+  const authenticate = async (token: string) => {
+    const verified = await verifyIdToken(token);
+    if (!verified) {
+      console.warn('❌ WebSocket connection rejected: Invalid or missing token');
+      ws.send(JSON.stringify({ type: 'error', message: 'Unauthorized: Invalid ID token' }));
+      ws.close(4001, 'Unauthorized');
+      return false;
+    }
+
+    session.userId = verified.uid;
+    session.isAuthenticated = true;
+    ws.send(JSON.stringify({ type: 'auth_ok', uid: verified.uid }));
+    console.log(`✅ Client authenticated: ${verified.uid}`);
+    return true;
+  };
+
+  // If token in URL, authenticate immediately
   if (queryToken) {
-    verifyIdToken(queryToken).then((user) => {
-      if (user) {
-        session.isAuthenticated = true;
-        session.userId = user.uid;
-        ws.send(JSON.stringify({ type: 'auth_ok', uid: user.uid }));
-      } else {
+    authenticate(queryToken);
+  } else {
+    // Give 5 seconds for auth message
+    setTimeout(() => {
+      if (!session.isAuthenticated && ws.readyState === WebSocket.OPEN) {
+        console.warn('Authentication timeout: closing socket');
+        ws.send(JSON.stringify({ type: 'error', message: 'Authentication timeout' }));
         ws.close(4001, 'Unauthorized');
       }
-    });
+    }, 5000);
   }
 
   ws.on('message', async (data: Buffer | string, isBinary: boolean) => {
-    // 1. Binary message = raw PCM 16kHz audio from client
+    // Handle Binary Audio Stream (Client -> Relay)
     if (isBinary) {
-      if (!session.isAuthenticated) {
-        ws.close(4001, 'Unauthorized');
-        return;
-      }
+      if (!session.isAuthenticated) return;
       if (session.sttSession && Buffer.isBuffer(data)) {
         session.sttSession.sendAudioChunk(data);
       }
       return;
     }
 
-    // 2. Text message = control frames
+    // Handle JSON Control Messages
     try {
       const msg = JSON.parse(data.toString());
 
-      // Auth frame
+      // 1. Auth message
       if (msg.type === 'auth') {
-        const user = await verifyIdToken(msg.token);
-        if (user) {
-          session.isAuthenticated = true;
-          session.userId = user.uid;
-          ws.send(JSON.stringify({ type: 'auth_ok', uid: user.uid }));
-        } else {
-          ws.close(4001, 'Unauthorized');
-        }
+        await authenticate(msg.token);
         return;
       }
 
-      // Enforce auth on all other operations
-      if (!session.isAuthenticated || !session.userId) {
-        ws.close(4001, 'Unauthorized');
+      // Check authentication for all other actions
+      if (!session.isAuthenticated) {
+        ws.send(JSON.stringify({ type: 'error', message: 'Please authenticate first' }));
         return;
       }
 
-      // Check per-user rate limit (120 req/min)
-      if (!userRateLimiter.check(session.userId)) {
-        ws.send(JSON.stringify({ type: 'error', message: 'Rate limit exceeded' }));
+      // Rate limit check
+      if (session.userId && !userRateLimiter.check(session.userId)) {
+        ws.send(JSON.stringify({ type: 'error', message: 'Rate limit exceeded. Please wait a moment.' }));
         return;
       }
 
-      // Start STT stream
+      // 2. Start STT session
       if (msg.type === 'start') {
-        const lang = msg.language || session.currentLanguage || 'hi';
+        const lang = msg.language || 'en';
         session.currentLanguage = lang;
 
+        // Teardown any existing STT session
         if (session.sttSession) {
           session.sttSession.stop();
         }
 
         session.sttSession = new GnaniSttSession({
           language: lang,
-          onPartialTranscript: (transcript) => {
+          onPartial: (partialText) => {
             if (ws.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify({ type: 'partial', transcript }));
+              ws.send(JSON.stringify({ type: 'partial', text: partialText }));
             }
           },
-          onFinalTranscript: (transcript) => {
+          onFinal: (finalText) => {
             if (ws.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify({ type: 'final', transcript }));
+              ws.send(JSON.stringify({ type: 'final', text: finalText }));
             }
           },
           onError: (err) => {
             if (ws.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify({ type: 'error', message: `STT error: ${err.message}` }));
+              ws.send(JSON.stringify({ type: 'error', message: err.message }));
             }
           },
         });
 
-        session.sttSession.start();
+        session.sttSession.connect();
         ws.send(JSON.stringify({ type: 'stt_ready', language: lang }));
       }
 
-      // Stop STT stream (end of speech / silence endpoint hit)
-      if (msg.type === 'stop') {
+      // 3. Stop STT session
+      else if (msg.type === 'stop') {
         session.speechEndTimestamp = Date.now();
         if (session.sttSession) {
           session.sttSession.stop();
           session.sttSession = null;
         }
-        ws.send(JSON.stringify({ type: 'stt_stopped' }));
       }
 
-      // Barge-in: user spoke while agent was talking -> immediately cancel TTS
-      if (msg.type === 'barge_in') {
+      // 4. Barge-In (cancel TTS audio immediately within 200ms)
+      else if (msg.type === 'barge_in') {
         if (session.ttsStreamer) {
           session.ttsStreamer.cancel();
           session.ttsStreamer = null;
         }
-        ws.send(JSON.stringify({ type: 'barge_in_ok' }));
+        ws.send(JSON.stringify({ type: 'barge_in_ok', timestamp: Date.now() }));
       }
 
-      // Speak: synthesize agent speech with Gnani Timbre and stream PCM audio back
-      if (msg.type === 'speak') {
+      // 5. Speak (TTS request)
+      else if (msg.type === 'speak') {
         const text = msg.text;
-        const lang = msg.language || session.currentLanguage || 'hi';
+        const lang = msg.language || session.currentLanguage || 'en';
+        if (!text) return;
 
+        // Cancel previous TTS if running
         if (session.ttsStreamer) {
           session.ttsStreamer.cancel();
         }
 
         session.ttsStreamer = new GnaniTtsStreamer();
-        ws.send(JSON.stringify({ type: 'agent_audio_start' }));
-
         let firstChunkSent = false;
 
-        session.ttsStreamer.streamSpeech({
+        ws.send(JSON.stringify({ type: 'agent_audio_start' }));
+
+        session.ttsStreamer.stream({
           text,
           language: lang,
           onAudioChunk: (chunk) => {

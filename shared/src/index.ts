@@ -79,6 +79,12 @@ export interface UserSettings {
   reminder_time: string;
 }
 
+export { applyVocabularyPostCorrection, HEALTH_VOCABULARY, POST_CORRECTION_MAP } from './vocab.js';
+export { evaluateDangerSigns, DANGER_RULES } from './danger/engine.js';
+export { parseSpokenNumber, validateMeasurementSanity, isClinicallyValid } from './normalisers/numbers.js';
+export { parseRelativeDate } from './normalisers/dates.js';
+export { detectCorrection } from './normalisers/corrections.js';
+
 export * from './vocab.js';
 export * from './danger/engine.js';
 export * from './normalisers/numbers.js';

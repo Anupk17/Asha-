@@ -51,12 +51,16 @@ export const VisitsSearchScreen: React.FC<VisitsSearchScreenProps> = ({
     try {
       const res = await seedDatabase(uid);
       await loadData();
-      showToast(
-        language === 'en'
-          ? `Seeded ${res.beneficiaries} beneficiaries & ${res.visits} visits!`
-          : `डेटा लोड: ${res.beneficiaries} लाभार्थी व ${res.visits} विज़िट!`,
-        'success'
-      );
+      const seedSuccessMessages: Record<string, string> = {
+        en: `Seeded ${res.beneficiaries} beneficiaries & ${res.visits} visits!`,
+        hi: `डेटा लोड: ${res.beneficiaries} लाभार्थी व ${res.visits} विज़िट!`,
+        ta: `மாதிரி தரவு ஏற்றப்பட்டது: ${res.beneficiaries} பயனாளிகள் & ${res.visits} பார்வைகள்!`,
+        te: `డేటా లోడ్ అయింది: ${res.beneficiaries} లబ్ధిదారులు & ${res.visits} సందర్శనలు!`,
+        kn: `ಡೇಟಾ ಲೋಡ್ ಆಗಿದೆ: ${res.beneficiaries} ಫಲಾನುಭವಿಗಳು & ${res.visits} ಭೇಟಿಗಳು!`,
+        ml: `ഡാറ്റ ലോഡ് ചെയ്തു: ${res.beneficiaries} ഗുണഭോക്താക്കൾ & ${res.visits} സന്ദർശനങ്ങൾ!`,
+        mr: `डेटा लोड झाला: ${res.beneficiaries} लाभार्थी आणि ${res.visits} भेटी!`,
+      };
+      showToast(seedSuccessMessages[language] || seedSuccessMessages.en, 'success');
     } catch (e) {
       showToast('Error seeding demo data', 'danger');
     } finally {

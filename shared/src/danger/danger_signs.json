@@ -16,7 +16,7 @@
       "type": "symptom",
       "aliases": {
         "en": ["heavy bleeding", "vaginal bleeding", "bleeding heavily", "blood discharge", "spotting blood", "excessive bleeding"],
-        "hi": ["khoon beh raha", "zyada khoon", "raktsrav", "khoon aana", "khoon gir raha", "bleeding ho rahi"],
+        "hi": ["khoon beh raha", "zyada khoon", "raktsrav", "khoon aana", "khoon gir raha", "bleeding ho rahi", "खून बह", "रक्तस्राव", "बहुत खून", "खून आ रहा", "खून गिर", "खून बह रहा"],
         "hinglish": ["heavy bleeding", "khoon ja raha hai", "bleeding bahut hai", "blood aa raha hai"]
       }
     },
@@ -49,7 +49,7 @@
       "type": "symptom",
       "aliases": {
         "en": ["severe headache", "blurred vision", "blurry vision", "flashing lights", "headache and visual disturbance", "seeing spots"],
-        "hi": ["bahut tez sirdard", "tez sar dard", "dhundhla dikhna", "aankhon ke aage andhera", "sar ghumna", "sir phat raha"],
+        "hi": ["bahut tez sirdard", "tez sar dard", "dhundhla dikhna", "aankhon ke aage andhera", "sar ghumna", "sir phat raha", "सिरदर्द", "धुंधला", "सिर दर्द", "चक्कर", "आंखों से धुंधला", "धुंधला दिख"],
         "hinglish": ["severe headache", "sar dard bahut tez", "dhundhla dikh raha hai", "blurry vision hai"]
       }
     },
@@ -82,7 +82,7 @@
       "type": "symptom",
       "aliases": {
         "en": ["convulsions", "fits", "seizures", "loss of consciousness with fits", "eclampsia fit"],
-        "hi": ["daura padna", "daure aana", "jhatke aana", "behosh hokar jhatke", "mirgi jaisa daura"],
+        "hi": ["daura padna", "daure aana", "jhatke aana", "behosh hokar jhatke", "mirgi jaisa daura", "दौरे", "झटके", "मिरगी", "दौरा"],
         "hinglish": ["fits aa rahe hai", "convulsions hue", "daura pada tha", "seizures aaye"]
       }
     },
@@ -115,8 +115,8 @@
       "type": "symptom",
       "aliases": {
         "en": ["difficulty breathing", "severe breathlessness", "gasping for air", "shortness of breath at rest"],
-        "hi": ["saans phoolna", "saans lene me takleef", "dam ghutna", "saans atakna"],
-        "hinglish": ["saans lene me problem", "heavy breathlessness", "breathless feel kar rahi"]
+        "hi": ["saans phoolna", "saans lene me takleef", "dam ghutna", "saans atakna", "saans phool", "saans lene me dikkat", "सांस फूल", "सांस लेने में", "दम घुट", "सांस की तकलीफ", "सांस फूलना"],
+        "hinglish": ["saans lene me problem", "heavy breathlessness", "breathless feel kar rahi", "saans phool rahi", "saans lene me dikkat"]
       }
     },
     "required_to_evaluate": [],
@@ -212,7 +212,7 @@
       "type": "symptom",
       "aliases": {
         "en": ["chest indrawing", "severe chest indrawing", "lower chest drawing in", "subcostal retractions", "ribs sucking in"],
-        "hi": ["seena dhans raha", "chhati dhansna", "pasli chalna", "pasliyan chal rahi hai", "chhati andar kheench rahi"],
+        "hi": ["seena dhans raha", "chhati dhansna", "pasli chalna", "pasliyan chal rahi hai", "chhati andar kheench rahi", "छाती भीतर धंस", "छाती धंस", "पसली", "पसली चल"],
         "hinglish": ["chest indrawing", "chhati andar ja rahi hai", "pasli chal rahi"]
       }
     },
@@ -244,9 +244,9 @@
     "trigger": {
       "type": "symptom",
       "aliases": {
-        "en": ["unable to feed", "not feeding", "cannot suck", "stopped breastfeeding", "refusing milk", "poor feeding"],
-        "hi": ["doodh nahi pee raha", "doodh chhod diya", "stanpaan nahi kar raha", "bachha peeta nahi", "kamjor choosna"],
-        "hinglish": ["feeding nahi le raha", "doodh nahi pi pa raha", "feed refuse kar raha", "unable to suck"]
+        "en": ["unable to feed", "not feeding", "cannot suck", "stopped breastfeeding", "refusing milk", "poor feeding", "poor sucking"],
+        "hi": ["doodh nahi pee raha", "doodh chhod diya", "stanpaan nahi kar raha", "bachha peeta nahi", "kamjor choosna", "dudh nahi pi raha", "दूध नहीं पी", "दूध छोड़", "स्तनपान बंद", "स्तनपान नहीं", "दूध नहीं"],
+        "hinglish": ["feeding nahi le raha", "doodh nahi pi pa raha", "feed refuse kar raha", "unable to suck", "poor sucking", "dudh nahi pi raha"]
       }
     },
     "required_to_evaluate": [],
@@ -358,4 +358,3 @@
     "last_updated": "2026-11-16"
   }
 ]
-

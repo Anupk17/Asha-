@@ -25,8 +25,9 @@ export function parseRelativeDate(text: string, baseDate: Date = new Date()): st
 
   const d = new Date(baseDate.getTime());
 
-  // 2. Today: "aaj", "today"
-  if (clean.includes('aaj') || clean.includes('today')) {
+  // 2. Day after tomorrow: "parso", "day after tomorrow"
+  if (clean.includes('parso') || clean.includes('day after tomorrow')) {
+    d.setDate(d.getDate() + 2);
     return formatIso(d);
   }
 
@@ -36,9 +37,8 @@ export function parseRelativeDate(text: string, baseDate: Date = new Date()): st
     return formatIso(d);
   }
 
-  // 4. Day after tomorrow: "parso", "day after tomorrow"
-  if (clean.includes('parso') || clean.includes('day after tomorrow')) {
-    d.setDate(d.getDate() + 2);
+  // 4. Today: "aaj", "today"
+  if (clean.includes('aaj') || clean.includes('today')) {
     return formatIso(d);
   }
 
@@ -69,9 +69,12 @@ export function parseRelativeDate(text: string, baseDate: Date = new Date()): st
     const day = parseInt(dateOfMonthMatch[1] || dateOfMonthMatch[2], 10);
     if (day >= 1 && day <= 31) {
       d.setDate(day);
-      // If the target day has already passed in current month, advance to next month
-      if (d.getTime() < baseDate.getTime()) {
-        d.setMonth(d.getMonth() + 1);
+      const isPastIntent = clean.includes('gaye') || clean.includes('the') || clean.includes('thi') || clean.includes('hui') || clean.includes('past') || clean.includes('visited');
+      // Only advance month if explicit future follow-up intent is stated and day has passed
+      if (!isPastIntent && (clean.includes('agle') || clean.includes('next') || clean.includes('aana'))) {
+        if (d.getTime() < baseDate.getTime()) {
+          d.setMonth(d.getMonth() + 1);
+        }
       }
       return formatIso(d);
     }
@@ -86,4 +89,3 @@ function formatIso(d: Date): string {
   const dd = String(d.getDate()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd}`;
 }
-

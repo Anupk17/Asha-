@@ -15,17 +15,25 @@ import { Beneficiary, Visit, FollowUp, AuditLog, UserSettings } from '@asha/shar
 import { MOCK_BENEFICIARIES, MOCK_VISITS, MOCK_FOLLOWUPS } from './mockData';
 
 // Local storage backup keys for offline or mock mode when Firebase is not connected to cloud
-const LOCAL_STORAGE_KEY_PREFIX = 'asha_v4_';
+const LOCAL_STORAGE_KEY_PREFIX = 'asha_v5_';
 
 // Auto-clean any legacy stale storage keys from previous development iterations
 if (typeof localStorage !== 'undefined') {
   try {
+    const keysToRemove: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key && (key.startsWith('asha_db_') || key.startsWith('asha_v2_') || key.startsWith('asha_v3_'))) {
-        localStorage.removeItem(key);
+      if (
+        key &&
+        (key.startsWith('asha_db_') ||
+          key.startsWith('asha_v2_') ||
+          key.startsWith('asha_v3_') ||
+          key.startsWith('asha_v4_'))
+      ) {
+        keysToRemove.push(key);
       }
     }
+    keysToRemove.forEach((k) => localStorage.removeItem(k));
   } catch {
     // Ignore
   }
@@ -58,21 +66,34 @@ const isMockMode = () => {
 /* ==================== BENEFICIARIES ==================== */
 
 export async function getBeneficiaries(uid: string): Promise<Beneficiary[]> {
+  let list: Beneficiary[];
   if (isMockMode()) {
-    return getLocal<Beneficiary>(`beneficiaries_${uid}`, MOCK_BENEFICIARIES);
+    list = getLocal<Beneficiary>(`beneficiaries_${uid}`, MOCK_BENEFICIARIES);
+  } else {
+    try {
+      const colRef = collection(db, `users/${uid}/beneficiaries`);
+      const snap = await getDocs(colRef);
+      const fetched: Beneficiary[] = [];
+      snap.forEach((d) => fetched.push({ ...(d.data() as Beneficiary), id: d.id }));
+      setLocal(`beneficiaries_${uid}`, fetched);
+      list = fetched;
+    } catch (err) {
+      console.warn('Firestore read failed (offline mode):', err);
+      list = getLocal<Beneficiary>(`beneficiaries_${uid}`, MOCK_BENEFICIARIES);
+    }
   }
 
-  try {
-    const colRef = collection(db, `users/${uid}/beneficiaries`);
-    const snap = await getDocs(colRef);
-    const list: Beneficiary[] = [];
-    snap.forEach((d) => list.push({ ...(d.data() as Beneficiary), id: d.id }));
-    setLocal(`beneficiaries_${uid}`, list);
-    return list;
-  } catch (err) {
-    console.warn('Firestore read failed (offline mode):', err);
-    return getLocal<Beneficiary>(`beneficiaries_${uid}`, MOCK_BENEFICIARIES);
+  // Deduplicate by code
+  const seen = new Set<string>();
+  const deduplicated: Beneficiary[] = [];
+  for (const b of list) {
+    const key = b.code || b.id;
+    if (!seen.has(key)) {
+      seen.add(key);
+      deduplicated.push(b);
+    }
   }
+  return deduplicated;
 }
 
 export async function getBeneficiary(uid: string, id: string): Promise<Beneficiary | null> {
@@ -155,22 +176,35 @@ export async function saveVisit(uid: string, visit: Visit): Promise<void> {
 /* ==================== FOLLOW-UPS ==================== */
 
 export async function getFollowUps(uid: string): Promise<FollowUp[]> {
+  let list: FollowUp[];
   if (isMockMode()) {
-    return getLocal<FollowUp>(`followups_${uid}`, MOCK_FOLLOWUPS);
+    list = getLocal<FollowUp>(`followups_${uid}`, MOCK_FOLLOWUPS);
+  } else {
+    try {
+      const colRef = collection(db, `users/${uid}/followups`);
+      const q = query(colRef, orderBy('due_date', 'asc'));
+      const snap = await getDocs(q);
+      const fetched: FollowUp[] = [];
+      snap.forEach((d) => fetched.push({ ...(d.data() as FollowUp), id: d.id }));
+      setLocal(`followups_${uid}`, fetched);
+      list = fetched;
+    } catch (err) {
+      console.warn('Firestore follow-ups read failed:', err);
+      list = getLocal<FollowUp>(`followups_${uid}`, MOCK_FOLLOWUPS);
+    }
   }
 
-  try {
-    const colRef = collection(db, `users/${uid}/followups`);
-    const q = query(colRef, orderBy('due_date', 'asc'));
-    const snap = await getDocs(q);
-    const list: FollowUp[] = [];
-    snap.forEach((d) => list.push({ ...(d.data() as FollowUp), id: d.id }));
-    setLocal(`followups_${uid}`, list);
-    return list;
-  } catch (err) {
-    console.warn('Firestore follow-ups read failed:', err);
-    return getLocal<FollowUp>(`followups_${uid}`, MOCK_FOLLOWUPS);
+  // Deduplicate by code and due date so conflicting legacy items never double-display
+  const seen = new Set<string>();
+  const deduplicated: FollowUp[] = [];
+  for (const item of list) {
+    const key = `${item.beneficiary_code || item.beneficiary_name}_${item.due_date}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      deduplicated.push(item);
+    }
   }
+  return deduplicated;
 }
 
 export async function saveFollowUp(uid: string, followUp: FollowUp): Promise<void> {

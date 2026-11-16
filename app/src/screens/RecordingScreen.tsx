@@ -1,13 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { MicButton } from '../components/ui/MicButton';
 import { Waveform } from '../components/ui/Waveform';
 import { Chip } from '../components/ui/Chip';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { Bot, User, Check, X, Sparkles, Volume2, Gauge } from 'lucide-react';
+import { Banner } from '../components/ui/Banner';
+import { Bot, User, Check, X, Sparkles, AlertTriangle, Gauge, HelpCircle, CheckCircle2 } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
+import { useAgentStore, AgentStep } from '../store/agentStore';
 import { getT } from '../i18n';
 import { VoicePipeline } from '../utils/audioPipeline';
+import { getLocalizedBeneficiaryName, getLocalizedVillageName, getLocalizedTaskType } from '../i18n/localize';
 
 export interface RecordingScreenProps {
   onFinishRecording: (extractedData: any) => void;
@@ -21,12 +24,26 @@ export const RecordingScreen: React.FC<RecordingScreenProps> = ({
   const { language, showToast } = useAppStore();
   const t = getT(language);
 
-  const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState('');
-  const [agentSpokenText, setAgentSpokenText] = useState(t.recording.aiDisclosureMsg);
-  const [isAgentSpeaking, setIsAgentSpeaking] = useState(false);
-  const [latencyMs, setLatencyMs] = useState<number | null>(480);
-  const [extractedEntities, setExtractedEntities] = useState<Array<{ label: string; type: string }>>([]);
+  const {
+    step,
+    agentSpokenText,
+    transcript,
+    isListening,
+    isAgentSpeaking,
+    latencyMs,
+    draftRecord,
+    missingField,
+    showTapFallbackNotice,
+    initSession,
+    setListening,
+    setAgentSpeaking,
+    setLatencyMs,
+    setPartialTranscript,
+    onFinalTranscript,
+    confirmAndSave,
+    cancelSession,
+    triggerBargeIn,
+  } = useAgentStore();
 
   const pipelineRef = useRef<VoicePipeline | null>(null);
 
@@ -35,36 +52,44 @@ export const RecordingScreen: React.FC<RecordingScreenProps> = ({
     const relayUrl = import.meta.env.VITE_RELAY_URL || 'http://localhost:8080';
     const pipeline = new VoicePipeline({
       onPartialTranscript: (text) => {
-        setTranscript(text);
+        setPartialTranscript(text);
       },
       onFinalTranscript: (text) => {
-        setTranscript(text);
-        setIsListening(false);
-        // Extract quick preview chips
-        extractQuickChips(text);
+        onFinalTranscript(text, (msg) => {
+          pipeline.requestTts(msg, language);
+        });
       },
       onAgentAudioStart: () => {
-        setIsAgentSpeaking(true);
+        setAgentSpeaking(true);
       },
       onAgentAudioEnd: () => {
-        setIsAgentSpeaking(false);
+        setAgentSpeaking(false);
+        // Automatically start listening after greeting or questions
+        const currentStep = useAgentStore.getState().step;
+        if (currentStep === 'GREETING' || currentStep === 'ASK_MISSING' || currentStep === 'CONFIRM_READBACK') {
+          pipeline.startRecording(language);
+          setListening(true);
+        }
       },
       onLatencyMeasured: (ms) => {
         setLatencyMs(ms);
       },
       onError: (err) => {
         showToast(err, 'danger');
-        setIsListening(false);
+        setListening(false);
       },
     });
 
     pipelineRef.current = pipeline;
     pipeline.connect(relayUrl, 'mock-jwt-token-for-dev');
 
-    // Auto-read initial AI greeting
+    // Initialize state machine
+    initSession(language);
+
+    // Speak initial AI greeting (under 2 sentences, discloses AI and no medical advice)
     const timer = setTimeout(() => {
-      pipeline.requestTts(t.recording.aiDisclosureMsg, language);
-    }, 400);
+      pipeline.requestTts(t.agentDialogue.greeting, language);
+    }, 350);
 
     return () => {
       clearTimeout(timer);
@@ -72,97 +97,183 @@ export const RecordingScreen: React.FC<RecordingScreenProps> = ({
     };
   }, [language]);
 
-  const extractQuickChips = (text: string) => {
-    const chips: Array<{ label: string; type: string }> = [];
-    if (/meena|mina/i.test(text)) chips.push({ label: 'Meena Devi', type: 'Name' });
-    if (/anc/i.test(text)) chips.push({ label: 'ANC Visit', type: 'Type' });
-    if (/\d+(\.\d+)?\s*(kg|kilo)/i.test(text)) {
-      const match = text.match(/\d+(\.\d+)?\s*(kg|kilo)/i);
-      if (match) chips.push({ label: match[0], type: 'Weight' });
+  // Handle transitions to SAVED or CANCELLED
+  useEffect(() => {
+    if (step === 'SAVED') {
+      showToast(t.confirm.savedSuccessToast, 'success');
+      setTimeout(() => {
+        onFinishRecording(draftRecord);
+      }, 1500);
+    } else if (step === 'CANCELLED') {
+      setTimeout(() => {
+        onCancel();
+      }, 1000);
     }
-    if (/tt/i.test(text)) chips.push({ label: 'TT Vaccine', type: 'Vaccine' });
-    if (/monday|somvar|16 nov/i.test(text)) chips.push({ label: 'Next: Monday', type: 'Due' });
-
-    if (chips.length > 0) {
-      setExtractedEntities(chips);
-    }
-  };
+  }, [step]);
 
   const handleToggleListening = () => {
     if (isListening) {
       pipelineRef.current?.stopRecording();
-      setIsListening(false);
+      setListening(false);
     } else {
       // Barge-in check: if agent is currently speaking, cut speech immediately
       if (isAgentSpeaking) {
         pipelineRef.current?.triggerBargeIn();
+        triggerBargeIn();
       }
-      setIsListening(true);
+      setListening(true);
       pipelineRef.current?.startRecording(language);
     }
   };
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     pipelineRef.current?.stopRecording();
-    setIsListening(false);
+    setListening(false);
 
-    onFinishRecording({
-      beneficiary_name: 'Meena Devi',
-      beneficiary_code: 'SYN-0001',
-      village: 'Rampur',
-      visit_type: 'ANC',
-      weight_kg: 54.5,
-      temperature_c: 37.0,
-      breaths_per_min: 18,
-      vaccinations_due: ['TT 2'],
-      next_visit_date: '2026-11-23',
-      danger_flags: [],
-      raw_transcript: transcript,
+    if (step === 'CONFIRM_READBACK') {
+      await confirmAndSave(undefined, (msg) => {
+        pipelineRef.current?.requestTts(msg, language);
+      });
+    } else {
+      onFinishRecording(draftRecord);
+    }
+  };
+
+  const handleCancelClick = () => {
+    cancelSession((msg) => {
+      pipelineRef.current?.requestTts(msg, language);
     });
   };
+
+  // Step badges
+  const getStepBadge = (s: AgentStep) => {
+    switch (s) {
+      case 'GREETING':
+        return { label: 'Greeting', color: 'bg-teal-100 text-teal-900 border-teal-700/20' };
+      case 'CAPTURE':
+        return { label: 'Listening to Notes', color: 'bg-saffron-100 text-saffron-900 border-saffron-500/30' };
+      case 'ASK_MISSING':
+        return { label: 'Missing Item Check', color: 'bg-yellow-100 text-yellow-900 border-yellow-500/30' };
+      case 'CONFIRM_READBACK':
+        return { label: 'Voice Confirmation', color: 'bg-teal-100 text-teal-900 border-teal-700/20' };
+      case 'CORRECT':
+        return { label: 'Correction Applied', color: 'bg-saffron-100 text-saffron-900 border-saffron-500/30' };
+      case 'SAVING':
+        return { label: 'Saving Record...', color: 'bg-blue-100 text-blue-900 border-blue-500/30' };
+      case 'SAVED':
+        return { label: 'Saved Successfully', color: 'bg-emerald-100 text-emerald-900 border-emerald-500/30' };
+      default:
+        return { label: 'Ready', color: 'bg-teal-100 text-teal-900 border-teal-700/20' };
+    }
+  };
+
+  const badge = getStepBadge(step);
 
   return (
     <div className="min-h-full flex flex-col justify-between p-4 max-w-md mx-auto pb-24 pt-2">
       {/* Header Info */}
       <div className="space-y-3">
-        {/* Agent First-turn AI Disclosure Bar with Speaking indicator & Latency chip */}
-        <div className="p-3 bg-teal-100 rounded-card border border-teal-700/20 flex items-start justify-between gap-2.5">
-          <div className="flex items-start gap-2.5">
-            <Bot size={20} className="text-teal-900 shrink-0 mt-0.5" />
-            <div className="text-xs text-teal-900 leading-relaxed font-medium">
-              <span className="font-bold block mb-0.5">{t.recording.aiDisclosureTitle}</span>
-              {agentSpokenText}
-            </div>
-          </div>
-
+        {/* Step Badge & Latency */}
+        <div className="flex items-center justify-between">
+          <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${badge.color}`}>
+            {badge.label}
+          </span>
           {latencyMs !== null && (
-            <div className="shrink-0 flex items-center gap-1 bg-surface/80 px-2 py-0.5 rounded text-[10px] font-mono font-bold text-teal-900 border border-teal-700/20 shadow-sm">
+            <div className="flex items-center gap-1 bg-surface px-2 py-0.5 rounded text-[10px] font-mono font-bold text-teal-900 border border-teal-700/20 shadow-sm">
               <Gauge size={11} className="text-teal-700" />
               <span>{latencyMs}ms</span>
             </div>
           )}
         </div>
 
-        {/* Live Extracted Entities Appearing in Real-time */}
-        {extractedEntities.length > 0 && (
-          <div className="space-y-1.5">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-muted flex items-center gap-1">
-              <Sparkles size={13} className="text-saffron-500" />
-              {t.recording.liveFieldsTitle}
-            </div>
-            <div className="flex flex-wrap gap-1.5 min-h-[36px]">
-              {extractedEntities.map((chip, idx) => (
-                <Chip key={idx} variant="teal" size="sm">
-                  <span className="font-bold">{chip.label}</span>
-                  <span className="opacity-70 text-[10px]">({chip.type})</span>
-                </Chip>
-              ))}
-            </div>
+        {/* Danger Banner if detected */}
+        {draftRecord.danger_flags.length > 0 && (
+          <Banner
+            type="danger"
+            title={t.confirm.dangerAlertTitle}
+            message={`${t.confirm.dangerAlertMsg} (${draftRecord.danger_flags.join(', ')})`}
+            guidelineSource="MoHFW Guidelines (Emergency Referral)"
+          />
+        )}
+
+        {/* Agent Spoken Dialogue Card */}
+        <div className="p-3.5 bg-teal-100 rounded-card border border-teal-700/20 flex items-start gap-2.5">
+          <Bot size={22} className={`text-teal-900 shrink-0 mt-0.5 ${isAgentSpeaking ? 'animate-bounce' : ''}`} />
+          <div className="text-xs text-teal-900 leading-relaxed font-medium">
+            <span className="font-bold block mb-0.5 text-teal-900">
+              {t.recording.aiDisclosureTitle}
+            </span>
+            <p className="text-sm font-semibold text-ink leading-snug">
+              {agentSpokenText}
+            </p>
+          </div>
+        </div>
+
+        {/* Missing Item Alert if in ASK_MISSING */}
+        {step === 'ASK_MISSING' && missingField && (
+          <div className="p-2.5 bg-amber-50 rounded-card border border-amber-300 flex items-center gap-2 text-xs text-amber-900 font-semibold">
+            <HelpCircle size={16} className="text-amber-700 shrink-0" />
+            <span>Missing: {missingField}. Please speak the value or answer the question.</span>
           </div>
         )}
 
-        {/* Live Transcript Card */}
-        <Card className="bg-surface border-line min-h-[120px] p-4 flex flex-col justify-between">
+        {/* Tap fallback notice if silence/unknown input happened */}
+        {showTapFallbackNotice && (
+          <div className="p-2.5 bg-saffron-100 rounded-card border border-saffron-500/40 text-xs text-ink font-semibold flex items-center gap-2">
+            <AlertTriangle size={16} className="text-saffron-500 shrink-0" />
+            <span>Tap "Confirm & Save" below or tap to edit any field.</span>
+          </div>
+        )}
+
+        {/* Live Extracted Fields / Chips */}
+        <div className="space-y-1.5">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-muted flex items-center gap-1">
+            <Sparkles size={13} className="text-saffron-500" />
+            <span>{t.recording.liveFieldsTitle}</span>
+          </div>
+          <div className="flex flex-wrap gap-1.5 min-h-[36px]">
+            {draftRecord.beneficiary_name && (
+              <Chip variant="teal" size="sm">
+                <span className="font-bold">
+                  {getLocalizedBeneficiaryName(draftRecord.beneficiary_code || '', draftRecord.beneficiary_name, language)}
+                </span>
+              </Chip>
+            )}
+            {draftRecord.visit_type && (
+              <Chip variant="teal" size="sm">
+                <span>{getLocalizedTaskType(draftRecord.visit_type, language)}</span>
+              </Chip>
+            )}
+            {draftRecord.weight_kg && (
+              <Chip variant="saffron" size="sm">
+                <span className="font-bold">{draftRecord.weight_kg} kg</span>
+              </Chip>
+            )}
+            {draftRecord.temperature_c && (
+              <Chip variant="neutral" size="sm">
+                <span>{draftRecord.temperature_c}°C</span>
+              </Chip>
+            )}
+            {draftRecord.breaths_per_min && (
+              <Chip variant="neutral" size="sm">
+                <span>{draftRecord.breaths_per_min}/min</span>
+              </Chip>
+            )}
+            {draftRecord.next_visit_date && (
+              <Chip variant="teal" size="sm">
+                <span>Next: {draftRecord.next_visit_date}</span>
+              </Chip>
+            )}
+            {draftRecord.danger_flags.map((df, idx) => (
+              <Chip key={idx} variant="danger" size="sm">
+                <span className="font-bold">⚠️ {df}</span>
+              </Chip>
+            ))}
+          </div>
+        </div>
+
+        {/* Live Speech Transcript Card */}
+        <Card className="bg-surface border-line min-h-[110px] p-4 flex flex-col justify-between">
           <div className="space-y-1">
             <div className="flex items-center justify-between text-xs font-semibold text-muted">
               <div className="flex items-center gap-1.5">
@@ -176,7 +287,7 @@ export const RecordingScreen: React.FC<RecordingScreenProps> = ({
                 </span>
               )}
             </div>
-            <p className="text-base text-ink font-medium leading-relaxed min-h-[48px]">
+            <p className="text-base text-ink font-medium leading-relaxed min-h-[44px]">
               {transcript || (
                 <span className="text-sm italic text-muted">
                   {isListening ? t.recording.listening : t.recording.tapToSpeak}
@@ -195,12 +306,17 @@ export const RecordingScreen: React.FC<RecordingScreenProps> = ({
       </div>
 
       {/* Mic Center Section */}
-      <div className="py-6 flex flex-col items-center justify-center">
+      <div className="py-4 flex flex-col items-center justify-center">
         <MicButton
           isListening={isListening}
           onClick={handleToggleListening}
           label={isListening ? t.recording.listening : t.recording.tapToSpeak}
         />
+        {step === 'CONFIRM_READBACK' && (
+          <p className="text-xs text-muted text-center mt-2 font-medium">
+            Say <span className="font-bold text-teal-900">"Yes"</span> to save, or speak a correction
+          </p>
+        )}
       </div>
 
       {/* Control Buttons */}
@@ -209,7 +325,7 @@ export const RecordingScreen: React.FC<RecordingScreenProps> = ({
           variant="secondary"
           size="md"
           icon={<X size={18} />}
-          onClick={onCancel}
+          onClick={handleCancelClick}
         >
           {t.recording.cancel}
         </Button>
@@ -217,10 +333,10 @@ export const RecordingScreen: React.FC<RecordingScreenProps> = ({
         <Button
           variant="primary"
           size="md"
-          icon={<Check size={18} />}
+          icon={<CheckCircle2 size={18} />}
           onClick={handleFinish}
         >
-          {t.recording.finish}
+          {step === 'CONFIRM_READBACK' ? t.confirm.confirmAndSave : t.recording.finish}
         </Button>
       </div>
     </div>

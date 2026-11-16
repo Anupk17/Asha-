@@ -16,6 +16,34 @@ export const SUPPORTED_LANGUAGES: LanguageInfo[] = [
   { code: 'mr', name: 'Marathi', nativeName: 'मराठी' },
 ];
 
+export interface AgentDialogue {
+  greeting: string;
+  askMissing: {
+    weight: string;
+    temperature: string;
+    breaths: string;
+    beneficiary: string;
+    nextVisitDate: string;
+  };
+  dangerAlert: string;
+  readback: {
+    prefix: string;
+    beneficiary: string;
+    visitType: string;
+    weight: string;
+    vaccinations: string;
+    nextVisitDate: string;
+    dangerSigns: string;
+    confirmQuestion: string;
+  };
+  correctionUpdated: (field: string, val: string) => string;
+  saved: (date: string) => string;
+  unknownRetry: string;
+  offlineNotice: string;
+  silenceTimeout: string;
+  cancelled: string;
+}
+
 export interface Translations {
   appName: string;
   tagline: string;
@@ -158,6 +186,7 @@ export interface Translations {
     deleteDataConfirm: string;
     deleteSuccess: string;
   };
+  agentDialogue: AgentDialogue;
   consent: {
     welcomeTitle: string;
     welcomeSubtitle: string;
@@ -331,6 +360,33 @@ export const translations: Record<SupportedLanguage, Translations> = {
       agreeCheckbox: 'I have read and agree to the privacy terms',
       continueBtn: 'Continue',
     },
+    agentDialogue: {
+      greeting: "Namaste Didi, I am your AI assistant and give no medical advice. Please speak your visit notes.",
+      askMissing: {
+        weight: "What was the weight?",
+        temperature: "Did you measure the temperature or fever?",
+        breaths: "What was the breathing rate per minute?",
+        beneficiary: "Who was this visit for?",
+        nextVisitDate: "When is the next visit date?",
+      },
+      dangerAlert: "Danger sign detected! Immediate hospital referral is required.",
+      readback: {
+        prefix: "Visit summary: ",
+        beneficiary: "Beneficiary",
+        visitType: "Visit type",
+        weight: "Weight",
+        vaccinations: "Vaccinations due",
+        nextVisitDate: "Next visit date",
+        dangerSigns: "Reported danger signs",
+        confirmQuestion: "Is everything correct? Say yes to save or tell me what to change.",
+      },
+      correctionUpdated: (field: string, val: string) => `Updated ${field} to ${val}. Is everything correct now?`,
+      saved: (date: string) => `Record saved. Next follow-up is scheduled for ${date}.`,
+      unknownRetry: "I didn't catch that. Say yes to save, speak a correction, or tap Confirm on screen.",
+      offlineNotice: "You are offline. Showing extracted fields for review. Tap Confirm to save offline.",
+      silenceTimeout: "Listening timed out. Tap the microphone when you are ready to speak.",
+      cancelled: "Visit recording cancelled.",
+    },
   },
 
   hi: {
@@ -488,6 +544,33 @@ export const translations: Record<SupportedLanguage, Translations> = {
       medicalDesc: 'यह ऐप कोई इलाज या दवा नहीं बताता। खतरे के लक्षण पर तुरंत PHC/CHC रेफरल की सलाह दी जाती है।',
       agreeCheckbox: 'मैंने शर्तें पढ़ ली हैं और सहमति देती हूँ',
       continueBtn: 'शुरू करें',
+    },
+    agentDialogue: {
+      greeting: "नमस्ते दीदी, मैं आपका एआई सहायक हूँ और कोई चिकित्सीय सलाह नहीं देता। कृपया गृह भेंट की जानकारी बताएं।",
+      askMissing: {
+        weight: "वजन कितना था?",
+        temperature: "क्या बुखार या तापमान नापा था?",
+        breaths: "प्रति मिनट सांस की गति कितनी थी?",
+        beneficiary: "यह भेंट किस लाभार्थी की थी?",
+        nextVisitDate: "अगली भेंट किस तारीख को है?",
+      },
+      dangerAlert: "खतरे का लक्षण मिला है! तुरंत अस्पताल रेफर करें।",
+      readback: {
+        prefix: "भेंट का विवरण: ",
+        beneficiary: "लाभार्थी",
+        visitType: "भेंट प्रकार",
+        weight: "वजन",
+        vaccinations: "टीके",
+        nextVisitDate: "अगली तारीख",
+        dangerSigns: "खतरे के लक्षण",
+        confirmQuestion: "सब सही है? सेव करने के लिए हाँ कहें, या बदलाव बताएं।",
+      },
+      correctionUpdated: (field: string, val: string) => `${field} को बदलकर ${val} कर दिया गया है। क्या अब सब सही है?`,
+      saved: (date: string) => `रिकॉर्ड सेव हो गया। अगला फॉलो-अप ${date} को तय है।`,
+      unknownRetry: "मुझे समझ नहीं आया। सेव करने के लिए हाँ कहें, बदलाव बताएं, या स्क्रीन पर टैप करें।",
+      offlineNotice: "आप ऑफलाइन हैं। कृपया विवरण देखकर स्क्रीन पर सेव बटन दबाएं।",
+      silenceTimeout: "आवाज़ सुनाई नहीं दी। बोलने के लिए माइक बटन दबाएं।",
+      cancelled: "भेंट रिकॉर्डिंग रद्द कर दी गई।",
     },
   },
 
@@ -647,6 +730,33 @@ export const translations: Record<SupportedLanguage, Translations> = {
       agreeCheckbox: 'விதிமுறைகளைப் படித்து ஒப்புக்கொள்கிறேன்',
       continueBtn: 'தொடரவும்',
     },
+    agentDialogue: {
+      greeting: "வணக்கம் அக்கா, நான் உங்கள் AI உதவியாளர், மருத்துவ ஆலோசனை வழங்குவதில்லை. தயவுசெய்து வருகை விவரங்களைக் கூறுங்கள்.",
+      askMissing: {
+        weight: "எடை எவ்வளவு இருந்தது?",
+        temperature: "காய்ச்சல் அல்லது வெப்பநிலை அளவிடப்பட்டதா?",
+        breaths: "ஒரு நிமிடத்திற்கு சுவாச வீதம் என்ன?",
+        beneficiary: "இந்த வருகை யாருக்கானது?",
+        nextVisitDate: "அடுத்த வருகை தேதி எப்போது?",
+      },
+      dangerAlert: "ஆபத்து அறிகுறி கண்டறியப்பட்டது! உடனடியாக மருத்துவமனைக்கு பரிந்துரைக்கவும்.",
+      readback: {
+        prefix: "வருகை விவரம்: ",
+        beneficiary: "பயனாளி",
+        visitType: "வருகை வகை",
+        weight: "எடை",
+        vaccinations: "தடுப்பூசிகள்",
+        nextVisitDate: "அடுத்த தேதி",
+        dangerSigns: "ஆபத்து அறிகுறிகள்",
+        confirmQuestion: "எல்லாம் சரியாக உள்ளதா? சேமிக்க ஆம் என்று சொல்லுங்கள் அல்லது மாற்றங்களைச் சொல்லுங்கள்.",
+      },
+      correctionUpdated: (field: string, val: string) => `${field} ${val} என மாற்றப்பட்டது. இப்போது எல்லாம் சரியா?`,
+      saved: (date: string) => `பதிவு சேமிக்கப்பட்டது. அடுத்த பின்தொடர்தல் ${date} அன்று.`,
+      unknownRetry: "எனக்கு புரியவில்லை. சேமிக்க ஆம் என்று சொல்லுங்கள் அல்லது திரையில் உறுதிப்படுத்து என்பதைத் தட்டவும்.",
+      offlineNotice: "நீங்கள் ஆஃப்லைனில் உள்ளீர்கள். ஆஃப்லைனில் சேமிக்க திரையில் உறுதிப்படுத்து என்பதைத் தட்டவும்.",
+      silenceTimeout: "கேட்கும் நேரம் முடிந்தது. பேச தயாராக இருக்கும்போது மைக்கை அழுத்தவும்.",
+      cancelled: "வருகை பதிவு ரத்து செய்யப்பட்டது.",
+    },
   },
 
   te: {
@@ -804,6 +914,33 @@ export const translations: Record<SupportedLanguage, Translations> = {
       medicalDesc: 'ఈ యాప్ చికిత్స అందించదు. ప్రమాదకర లక్షణాలు ఉన్నప్పుడు ఆసుపత్రికి పంపుతుంది.',
       agreeCheckbox: 'నేను నిబంధనలను చదివి అంగీకరిస్తున్నాను',
       continueBtn: 'కొనసాగించు',
+    },
+    agentDialogue: {
+      greeting: "నమస్కారం అక్కా, నేను మీ AI సహాయకుడిని, వైద్య సలహాలు ఇవ్వను. దయచేసి సందర్శన వివరాలు చెప్పండి.",
+      askMissing: {
+        weight: "బరువు ఎంత ఉంది?",
+        temperature: "జ్వరం లేదా ఉష్ణోగ్రత కొలిచారా?",
+        breaths: "నిమిషానికి శ్వాస రేటు ఎంత?",
+        beneficiary: "ఈ సందర్శన ఎవరి కోసం?",
+        nextVisitDate: "తదుపరి సందర్శన తేదీ ఎప్పుడు?",
+      },
+      dangerAlert: "ప్రమాద సంకేతం గుర్తించబడింది! వెంటనే ఆసుపత్రికి రిఫర్ చేయండి.",
+      readback: {
+        prefix: "సందర్శన సారాంశం: ",
+        beneficiary: "లబ్ధిదారు",
+        visitType: "రకం",
+        weight: "బరువు",
+        vaccinations: "టీకాలు",
+        nextVisitDate: "తదుపరి తేదీ",
+        dangerSigns: "ప్రమాద సంకేతాలు",
+        confirmQuestion: "అంతా సరిగ్గా ఉందా? సేవ్ చేయడానికి అవును అనండి లేదా మార్పులు చెప్పండి.",
+      },
+      correctionUpdated: (field: string, val: string) => `${field} ను ${val} గా మార్చాము. ఇప్పుడు అంతా సరిగ్గా ఉందా?`,
+      saved: (date: string) => `రికార్డు సేవ్ చేయబడింది. తదుపరి ఫాలో-అప్ ${date} తేదీన నిర్ణయించబడింది.`,
+      unknownRetry: "నాకు అర్థం కాలేదు. సేవ్ చేయడానికి అవును అనండి లేదా స్క్రీన్‌పై నిర్ధారించండి నొక్కండి.",
+      offlineNotice: "మీరు ఆఫ్‌లైన్‌లో ఉన్నారు. ఆఫ్‌లైన్‌లో సేవ్ చేయడానికి స్క్రీన్‌పై నిర్ధారించండి నొక్కండి.",
+      silenceTimeout: "వినే సమయం ముగిసింది. మాట్లాడటానికి మైక్రోఫోన్ నొక్కండి.",
+      cancelled: "సందర్శన రికార్డింగ్ రద్దు చేయబడింది.",
     },
   },
 
@@ -963,6 +1100,33 @@ export const translations: Record<SupportedLanguage, Translations> = {
       agreeCheckbox: 'ನಾನು ನಿಯಮಗಳನ್ನು ಓದಿದ್ದೇನೆ ಮತ್ತು ಒಪ್ಪುತ್ತೇನೆ',
       continueBtn: 'ಮುಂದುವರಿಯಿರಿ',
     },
+    agentDialogue: {
+      greeting: "ನಮಸ್ಕಾರ ಅಕ್ಕ, ನಾನು ನಿಮ್ಮ AI ಸಹಾಯಕ ಮತ್ತು ಯಾವುದೇ ವೈದ್ಯಕೀಯ ಸಲಹೆ ನೀಡುವುದಿಲ್ಲ. ದಯವಿಟ್ಟು ಭೇಟಿಯ ವಿವರಗಳನ್ನು ತಿಳಿಸಿ.",
+      askMissing: {
+        weight: "ತೂಕ ಎಷ್ಟಿತ್ತು?",
+        temperature: "ಜ್ವರ ಅಥವಾ ತಾಪಮಾನವನ್ನು ಅಳೆಯಲಾಗಿದೆಯೇ?",
+        breaths: "ನಿಮಿಷಕ್ಕೆ ಉಸಿರಾಟದ ದರ ಎಷ್ಟಿತ್ತು?",
+        beneficiary: "ಈ ಭೇಟಿ ಯಾರಿಗೆ ಸಂಬಂಧಿಸಿದ್ದು?",
+        nextVisitDate: "ಮುಂದಿನ ಭೇಟಿಯ ದಿನಾಂಕ ಯಾವಾಗ?",
+      },
+      dangerAlert: "ಅಪಾಯದ ಲಕ್ಷಣ ಕಂಡುಬಂದಿದೆ! ತಕ್ಷಣ ಆಸ್ಪತ್ರೆಗೆ ರೆಫರ್ ಮಾಡಿ.",
+      readback: {
+        prefix: "ಭೇಟಿಯ ಸಾರಾಂಶ: ",
+        beneficiary: "ಫಲಾನುಭವಿ",
+        visitType: "ವಿಧ",
+        weight: "ತೂಕ",
+        vaccinations: "ಲಸಿಕೆಗಳು",
+        nextVisitDate: "ಮುಂದಿನ ದಿನಾಂಕ",
+        dangerSigns: "ಅಪಾಯದ ಲಕ್ಷಣಗಳು",
+        confirmQuestion: "ಎಲ್ಲವೂ ಸರಿಯಾಗಿದೆಯೇ? ಉಳಿಸಲು ಹೌದು ಎಂದು ಹೇಳಿ ಅಥವಾ ಬದಲಾವಣೆಗಳನ್ನು ತಿಳಿಸಿ.",
+      },
+      correctionUpdated: (field: string, val: string) => `${field} ಅನ್ನು ${val} ಗೆ ನವೀಕರಿಸಲಾಗಿದೆ. ಈಗ ಎಲ್ಲವೂ ಸರಿಯಾಗಿದೆಯೇ?`,
+      saved: (date: string) => `ದಾಖಲೆ ಉಳಿಸಲಾಗಿದೆ. ಮುಂದಿನ ಫಾಲೋ-ಅಪ್ ${date} ರಂದು ನಿಗದಿಯಾಗಿದೆ.`,
+      unknownRetry: "ನನಗೆ ಅರ್ಥವಾಗಲಿಲ್ಲ. ಉಳಿಸಲು ಹೌದು ಎಂದು ಹೇಳಿ ಅಥವಾ ಸ್ಕ್ರೀನ್ ಮೇಲೆ ದೃಢೀಕರಿಸಿ ಒತ್ತಿರಿ.",
+      offlineNotice: "ನೀವು ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿದ್ದೀರಿ. ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿ ಉಳಿಸಲು ಪರದೆಯ ಮೇಲೆ ದೃಢೀಕರಿಸಿ ಒತ್ತಿರಿ.",
+      silenceTimeout: "ಆಲಿಸುವ ಸಮಯ ಮುಗಿದಿದೆ. ಮಾತನಾಡಲು ಮೈಕ್ರೊಫೋನ್ ಒತ್ತಿರಿ.",
+      cancelled: "ಭೇಟಿ ರೆಕಾರ್ಡಿಂಗ್ ರದ್ದುಗೊಳಿಸಲಾಗಿದೆ.",
+    },
   },
 
   ml: {
@@ -1121,6 +1285,33 @@ export const translations: Record<SupportedLanguage, Translations> = {
       agreeCheckbox: 'നിബന്ധനകൾ വായിച്ച് സമ്മതിക്കുന്നു',
       continueBtn: 'തുടരുക',
     },
+    agentDialogue: {
+      greeting: "നമസ്കാരം ചേച്ചി, ഞാൻ നിങ്ങളുടെ AI അസിസ്റ്റന്റാണ്, ചികിത്സാ ഉപദേശങ്ങൾ നൽകുന്നില്ല. ദയവായി സന്ദർശന വിവരങ്ങൾ പറയൂ.",
+      askMissing: {
+        weight: "ഭാരം എത്രയായിരുന്നു?",
+        temperature: "പനിയോ താപനിലയോ അളന്നിരുന്നോ?",
+        breaths: "മിനിറ്റിൽ ശ്വാസോച്ഛ്വാസ നിരക്ക് എത്രയായിരുന്നു?",
+        beneficiary: "ഈ സന്ദർശനം ആർക്കുവേണ്ടിയായിരുന്നു?",
+        nextVisitDate: "അടുത്ത സന്ദർശന തീയതി എപ്പോഴാണ്?",
+      },
+      dangerAlert: "അപകട ലക്ഷണം കണ്ടെത്തി! ഉടൻ ആശുപത്രിയിലേക്ക് റഫർ ചെയ്യുക.",
+      readback: {
+        prefix: "സന്ദർശന സംഗ്രഹം: ",
+        beneficiary: "ഗുണഭോക്താവ്",
+        visitType: "തരം",
+        weight: "ഭാരം",
+        vaccinations: "വാക്സിനുകൾ",
+        nextVisitDate: "അടുത്ത തീയതി",
+        dangerSigns: "അപകട ലക്ഷണങ്ങൾ",
+        confirmQuestion: "എല്ലാം ശരിയാണോ? സേവ് ചെയ്യാൻ അതെ എന്ന് പറയുക അല്ലെങ്കിൽ മാറ്റങ്ങൾ പറയുക.",
+      },
+      correctionUpdated: (field: string, val: string) => `${field} ${val} ആയി മാറ്റി. ഇപ്പോൾ എല്ലാം ശരിയാണോ?`,
+      saved: (date: string) => `റെക്കോർഡ് സേവ് ചെയ്തു. അടുത്ത ഫോളോ-അപ്പ് ${date}-ൽ ഷെഡ്യൂൾ ചെയ്തിരിക്കുന്നു.`,
+      unknownRetry: "മനസ്സിലായില്ല. സേവ് ചെയ്യാൻ അതെ എന്ന് പറയുക അല്ലെങ്കിൽ സ്‌ക്രീനിൽ സ്ഥിരീകരിക്കുക ടാപ്പ് ചെയ്യുക.",
+      offlineNotice: "നിങ്ങൾ ഓഫ്‌ലൈനിലാണ്. ഓഫ്‌ലൈനായി സേവ് ചെയ്യാൻ സ്ക്രീനിൽ സ്ഥിരീകരിക്കുക ടാപ്പ് ചെയ്യുക.",
+      silenceTimeout: "കേൾക്കുന്ന സമയം കഴിഞ്ഞു. സംസാരിക്കാൻ റെഡിയാകുമ്പോൾ മൈക്ക് അമർത്തുക.",
+      cancelled: "സന്ദർശന റെക്കോർഡിംഗ് റദ്ദാക്കി.",
+    },
   },
 
   mr: {
@@ -1278,6 +1469,33 @@ export const translations: Record<SupportedLanguage, Translations> = {
       medicalDesc: 'हे ॲप कोणताही उपचार सुचवत नाही. धोका असल्यास रुग्णालयात जाण्याचा सल्ला देते.',
       agreeCheckbox: 'मी सर्व अटी वाचल्या आहेत आणि मान्य करतो',
       continueBtn: 'पुढे जा',
+    },
+    agentDialogue: {
+      greeting: "नमस्ते ताई, मी तुमचा AI सहाय्यक आहे आणि कोणताही वैद्यकीय सल्ला देत नाही. कृपया गृहभेटीची माहिती सांगा.",
+      askMissing: {
+        weight: "वजन किती होते?",
+        temperature: "ताप किंवा तापमान मोजले होते का?",
+        breaths: "प्रति मिनिट श्वासोच्छवासाचा वेग किती होता?",
+        beneficiary: "ही भेट कोणासाठी होती?",
+        nextVisitDate: "पुढील भेटीची तारीख कधी आहे?",
+      },
+      dangerAlert: "धोक्याचे लक्षण आढळले! त्वरित रुग्णालयात रेफर करा.",
+      readback: {
+        prefix: "भेटीचा तपशील: ",
+        beneficiary: "लाभार्थी",
+        visitType: "प्रकार",
+        weight: "वजन",
+        vaccinations: "लस",
+        nextVisitDate: "पुढील तारीख",
+        dangerSigns: "धोक्याची लक्षणे",
+        confirmQuestion: "सर्व बरोबर आहे का? सेव्ह करण्यासाठी हो म्हणा किंवा बदल सांगा.",
+      },
+      correctionUpdated: (field: string, val: string) => `${field} बदलून ${val} केले आहे. आता सर्व बरोबर आहे का?`,
+      saved: (date: string) => `नोंद सेव्ह झाली. पुढील पाठपुरावा ${date} रोजी निश्चित केला आहे.`,
+      unknownRetry: "मला समजले नाही. सेव्ह करण्यासाठी हो म्हणा किंवा स्क्रीनवर निश्चित करा टॅप करा.",
+      offlineNotice: "तुम्ही ऑफलाइन आहात. ऑफलाइन जतन करण्यासाठी स्क्रीनवर निश्चित करा टॅप करा.",
+      silenceTimeout: "वेळ संपली. बोलण्यासाठी माईक बटण दाबा.",
+      cancelled: "भेट नोंदणी रद्द केली.",
     },
   },
 };
