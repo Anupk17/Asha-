@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Banner } from '../components/ui/Banner';
 import { FieldRow } from '../components/ui/FieldRow';
 import { Button } from '../components/ui/Button';
@@ -8,6 +8,7 @@ import { useAppStore } from '../store/appStore';
 import { useAgentStore } from '../store/agentStore';
 import { getT } from '../i18n';
 import { getLocalizedBeneficiaryName, getLocalizedVillageName, getLocalizedTaskType } from '../i18n/localize';
+import { VoicePipeline } from '../utils/audioPipeline';
 
 export interface ConfirmScreenProps {
   onSave: (confirmedData: any) => void;
@@ -18,12 +19,47 @@ export const ConfirmScreen: React.FC<ConfirmScreenProps> = ({
   onSave,
   onRetake,
 }) => {
-  const { language } = useAppStore();
+  const { language, showToast } = useAppStore();
   const t = getT(language);
-  const { draftRecord, agentSpokenText, recentlyEditedField, updateDraftField, confirmAndSave, reRecord } = useAgentStore();
+  const {
+    draftRecord,
+    agentSpokenText,
+    recentlyEditedField,
+    updateDraftField,
+    confirmAndSave,
+    reRecord,
+    repeatLastPrompt,
+    isAgentSpeaking,
+    setAgentSpeaking,
+  } = useAgentStore();
 
   const [editingModalField, setEditingModalField] = useState<string | null>(null);
   const [modalInputValue, setModalInputValue] = useState<string>('');
+  const pipelineRef = useRef<VoicePipeline | null>(null);
+
+  useEffect(() => {
+    const relayUrl = import.meta.env.VITE_RELAY_URL || 'http://localhost:8080';
+    const pipeline = new VoicePipeline({
+      onAgentAudioStart: () => setAgentSpeaking(true),
+      onAgentAudioEnd: () => setAgentSpeaking(false),
+    });
+    pipeline.connect(relayUrl, 'mock-jwt-token-for-dev');
+    pipelineRef.current = pipeline;
+
+    return () => {
+      pipeline.disconnect();
+    };
+  }, []);
+
+  const handleReadAgain = () => {
+    repeatLastPrompt((msg) => {
+      if (pipelineRef.current) {
+        pipelineRef.current.requestTts(msg, language);
+      } else {
+        showToast(msg, 'info');
+      }
+    });
+  };
 
   const hasDanger = (draftRecord.danger_flags?.length || 0) > 0;
   const hasUnknowns = (draftRecord.danger_unknowns?.length || 0) > 0;
@@ -87,10 +123,11 @@ export const ConfirmScreen: React.FC<ConfirmScreenProps> = ({
         </div>
         <button
           type="button"
-          onClick={() => {}}
-          className="text-teal-900 font-bold underline ml-2 shrink-0 hover:opacity-80"
+          onClick={handleReadAgain}
+          disabled={isAgentSpeaking}
+          className="text-teal-900 font-bold underline ml-2 shrink-0 hover:opacity-80 disabled:opacity-50"
         >
-          {t.confirm.listenAgain}
+          {isAgentSpeaking ? 'Playing...' : t.confirm.listenAgain}
         </button>
       </div>
 

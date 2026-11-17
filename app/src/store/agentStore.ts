@@ -9,7 +9,7 @@ import {
   type BeneficiaryType,
   type Visit,
 } from '@asha/shared';
-import { getT, SupportedLanguage } from '../i18n';
+import { getT, type SupportedLanguage } from '../i18n/index.ts';
 import { extractVisitData, ExtractedVisitData } from '../utils/extractionClient';
 import { saveVisit, saveFollowUp, getFollowUps, getBeneficiaries } from '../data/repository';
 import { ReminderService } from '../utils/reminderService';
@@ -197,6 +197,12 @@ export const useAgentStore = create<AgentStoreState>((set, get) => ({
       draftRecord: updated,
       recentlyEditedField: String(field),
     });
+
+    setTimeout(() => {
+      if (get().recentlyEditedField === String(field)) {
+        set({ recentlyEditedField: null });
+      }
+    }, 2000);
 
     if (speakTts) {
       const fieldName = String(field).replace(/_/g, ' ');
@@ -401,6 +407,12 @@ export const useAgentStore = create<AgentStoreState>((set, get) => ({
           isAgentSpeaking: true,
           retryCount: 0,
         });
+
+        setTimeout(() => {
+          if (get().recentlyEditedField === correction.field) {
+            set({ recentlyEditedField: null });
+          }
+        }, 2000);
 
         if (speakTts) speakTts(updateMsg);
         return;

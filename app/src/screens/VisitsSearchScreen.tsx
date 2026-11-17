@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Search, UserCheck, Baby, Heart, Plus, MapPin, Calendar } from 'lucide-react';
+import { Search, UserCheck, Baby, Heart, Plus, MapPin, Calendar, X } from 'lucide-react';
 import { Beneficiary, BeneficiaryType } from '@asha/shared';
 import { Card } from '../components/ui/Card';
 import { Chip } from '../components/ui/Chip';
-import { getBeneficiaries } from '../data/repository';
+import { Button } from '../components/ui/Button';
+import { getBeneficiaries, saveBeneficiary } from '../data/repository';
 import { searchBeneficiaries } from '../utils/search';
 import { seedDatabase } from '../data/seed';
 import { useAppStore } from '../store/appStore';
@@ -27,6 +28,13 @@ export const VisitsSearchScreen: React.FC<VisitsSearchScreenProps> = ({
   const [filterType, setFilterType] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [isSeeding, setIsSeeding] = useState(false);
+
+  // Add Beneficiary Modal State
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newType, setNewType] = useState<BeneficiaryType>('pregnant');
+  const [newVillage, setNewVillage] = useState('Rampur');
+  const [newDate, setNewDate] = useState('2026-12-15');
 
   const uid = 'demo-asha-worker-01';
 
@@ -65,6 +73,38 @@ export const VisitsSearchScreen: React.FC<VisitsSearchScreenProps> = ({
       showToast('Error seeding demo data', 'danger');
     } finally {
       setIsSeeding(false);
+    }
+  };
+
+  const handleCreateBeneficiary = async () => {
+    if (!newName.trim()) {
+      showToast('Please enter a beneficiary name', 'danger');
+      return;
+    }
+
+    const nextIndex = beneficiaries.length + 1;
+    const code = `SYN-00${nextIndex < 10 ? '0' + nextIndex : nextIndex}`;
+    const newB: Beneficiary = {
+      id: `syn-b-${Date.now()}`,
+      code,
+      name: newName.trim(),
+      type: newType,
+      village: newVillage,
+      language: language === 'en' ? 'en' : 'hi',
+      expected_delivery_date: newType === 'pregnant' ? newDate : undefined,
+      date_of_birth: newType !== 'pregnant' ? newDate : undefined,
+      created_at: new Date().toISOString(),
+    };
+
+    try {
+      await saveBeneficiary(uid, newB);
+      setBeneficiaries([newB, ...beneficiaries]);
+      setIsAddModalOpen(false);
+      setNewName('');
+      showToast(`Registered ${newB.name} (${newB.code}) successfully!`, 'success');
+      onSelectBeneficiary?.(newB);
+    } catch (e) {
+      showToast('Failed to save beneficiary', 'danger');
     }
   };
 
@@ -124,7 +164,10 @@ export const VisitsSearchScreen: React.FC<VisitsSearchScreenProps> = ({
         </div>
         <button
           type="button"
-          onClick={onNewBeneficiary}
+          onClick={() => {
+            setIsAddModalOpen(true);
+            onNewBeneficiary?.();
+          }}
           className="h-10 px-3 rounded-btn bg-teal-900 text-white text-xs font-semibold flex items-center gap-1.5 shadow-soft hover:bg-teal-700"
         >
           <Plus size={16} />
@@ -227,6 +270,102 @@ export const VisitsSearchScreen: React.FC<VisitsSearchScreenProps> = ({
           </div>
         )}
       </div>
+
+      {/* Add New Beneficiary Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-surface rounded-card p-5 w-full max-w-sm border border-line space-y-4 shadow-xl">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-base text-ink">
+                {t.beneficiaries.addNew}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsAddModalOpen(false)}
+                className="p-1 text-muted hover:text-ink rounded-full"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block font-semibold text-muted mb-1">Full Name</label>
+                <input
+                  type="text"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="e.g. Suman Devi"
+                  className="w-full px-3 py-2 border border-line rounded-lg bg-cream text-ink text-sm focus:outline-none focus:border-teal-700"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-muted mb-1">Category / Type</label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {(['pregnant', 'newborn', 'child'] as const).map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setNewType(cat)}
+                      className={`py-2 px-2 rounded-lg font-semibold text-xs border text-center transition-all ${
+                        newType === cat
+                          ? 'bg-teal-900 text-white border-teal-900'
+                          : 'bg-cream text-ink border-line hover:border-teal-700/40'
+                      }`}
+                    >
+                      {cat === 'pregnant' ? 'Pregnant' : cat === 'newborn' ? 'Newborn' : 'Child'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-muted mb-1">Village</label>
+                <select
+                  value={newVillage}
+                  onChange={(e) => setNewVillage(e.target.value)}
+                  className="w-full px-3 py-2 border border-line rounded-lg bg-cream text-ink text-sm focus:outline-none focus:border-teal-700"
+                >
+                  <option value="Rampur">Rampur</option>
+                  <option value="Kishanpur">Kishanpur</option>
+                  <option value="Shivpur">Shivpur</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-muted mb-1">
+                  {newType === 'pregnant' ? 'Expected Delivery Date (EDD)' : 'Date of Birth (DOB)'}
+                </label>
+                <input
+                  type="date"
+                  value={newDate}
+                  onChange={(e) => setNewDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-line rounded-lg bg-cream text-ink text-sm focus:outline-none focus:border-teal-700"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 pt-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setIsAddModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleCreateBeneficiary}
+              >
+                Register
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

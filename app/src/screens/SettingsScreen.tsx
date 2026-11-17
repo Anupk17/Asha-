@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, Globe, Bell, Volume2, MapPin, Gauge, Info, RefreshCw, Database, Moon } from 'lucide-react';
+import { Trash2, Globe, Bell, Volume2, MapPin, Gauge, Info, RefreshCw, Database, Moon, Type } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { useAppStore } from '../store/appStore';
@@ -16,7 +16,7 @@ export interface SettingsScreenProps {
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   onDeleteAllData,
 }) => {
-  const { language, setLanguage, showToast } = useAppStore();
+  const { language, setLanguage, textSize, setTextSize, showToast } = useAppStore();
   const t = getT(language);
 
   const [noiseMode, setNoiseMode] = useState(true);
@@ -132,6 +132,36 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             </option>
           ))}
         </select>
+      </Card>
+
+      {/* Text Size Accessibility */}
+      <Card className="p-3.5 bg-surface border-line space-y-2">
+        <div className="flex items-center gap-2">
+          <Type size={18} className="text-teal-700" />
+          <div>
+            <div className="text-sm font-bold text-ink">Text Size (Readable in Sunlight)</div>
+            <div className="text-xs text-muted">Adjust scale for low-end screens</div>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-2 pt-1">
+          {(['normal', 'large', 'extra-large'] as const).map((size) => (
+            <button
+              key={size}
+              type="button"
+              onClick={() => {
+                setTextSize(size);
+                showToast(`Text size set to ${size}`, 'info');
+              }}
+              className={`py-2 px-3 rounded-btn text-xs font-bold border transition-all ${
+                textSize === size
+                  ? 'bg-teal-900 text-white border-teal-900 shadow-sm'
+                  : 'bg-cream text-ink border-line hover:border-teal-700/40'
+              }`}
+            >
+              {size === 'normal' ? 'Normal (16px)' : size === 'large' ? 'Large (18px)' : 'Extra (20px)'}
+            </button>
+          ))}
+        </div>
       </Card>
 
       {/* Reminders & Notifications Settings (Phase 6) */}

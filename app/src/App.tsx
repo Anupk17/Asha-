@@ -18,6 +18,7 @@ export const App: React.FC = () => {
   const {
     currentScreen,
     language,
+    textSize,
     toastMessage,
     toastType,
     setScreen,
@@ -30,6 +31,8 @@ export const App: React.FC = () => {
 
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
   const t = getT(language);
+
+  const textSizeClass = textSize === 'large' ? 'text-[17px]' : textSize === 'extra-large' ? 'text-[19px]' : '';
 
   useEffect(() => {
     // Initialise anonymous Firebase authentication
@@ -57,7 +60,7 @@ export const App: React.FC = () => {
   const isMainTab = ['today', 'visits', 'map', 'month', 'settings'].includes(currentScreen);
 
   return (
-    <div className="h-full flex flex-col bg-cream text-ink select-none overflow-hidden">
+    <div className={`h-full flex flex-col bg-cream text-ink select-none overflow-hidden pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ${textSizeClass}`}>
       {/* Top Application Header */}
       {currentScreen !== 'consent' && (
         <header className="sticky top-0 z-20 bg-surface/90 backdrop-blur border-b border-line px-4 py-2.5 flex items-center justify-between">

@@ -38,3 +38,4 @@ for (const s of schedules) {
 
 console.log('\nTotal Schedules Registered:', schedules.length);
 console.log('========================================================================================\n');
+

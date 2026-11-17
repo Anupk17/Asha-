@@ -317,6 +317,20 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({
           </div>
         )}
       </div>
+
+      {/* Floating Mic Action Button (FAB) in Thumb Zone */}
+      <div className="fixed bottom-20 right-5 z-40 max-w-md">
+        <button
+          type="button"
+          onClick={onStartRecord}
+          className="w-16 h-16 rounded-full bg-saffron-500 hover:bg-saffron-600 active:scale-95 text-white shadow-xl flex items-center justify-center border-2 border-white transition-all transform focus:outline-none focus:ring-4 focus:ring-saffron-500/30 group"
+          aria-label="Start Voice Recording"
+          title="Start Voice Home Visit"
+        >
+          <span className="absolute -inset-1 rounded-full bg-saffron-500/30 animate-ping opacity-60 pointer-events-none" />
+          <Mic size={28} className="stroke-[2.5] relative z-10" />
+        </button>
+      </div>
     </div>
   );
 };

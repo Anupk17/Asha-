@@ -1,5 +1,5 @@
 import Fuse, { type IFuseOptions } from 'fuse.js';
-import { Beneficiary } from '@asha/shared';
+import type { Beneficiary } from '@asha/shared';
 
 /**
  * Normalises Hinglish/Indic transliteration variations so that:
