@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { Trash2, Globe, Bell, Volume2, MapPin, Gauge, Info, RefreshCw, Database } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Trash2, Globe, Bell, Volume2, MapPin, Gauge, Info, RefreshCw, Database, Moon } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { useAppStore } from '../store/appStore';
-import { deleteAllUserData } from '../data/repository';
+import { deleteAllUserData, getFollowUps } from '../data/repository';
 import { seedDatabase } from '../data/seed';
 import { getT, SUPPORTED_LANGUAGES, SupportedLanguage } from '../i18n';
+import { ReminderService, ReminderSettings } from '../utils/reminderService';
 
 export interface SettingsScreenProps {
   onResetConsent?: () => void;
@@ -22,11 +23,37 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [showLatency, setShowLatency] = useState(true);
   const [locationSharing, setLocationSharing] = useState(true);
   const [locationPrecision, setLocationPrecision] = useState<'exact' | 'village'>('village');
+  
+  // Reminders & Notifications
+  const [remindersEnabled, setRemindersEnabled] = useState(true);
   const [reminderTime, setReminderTime] = useState('08:00');
+  const [quietHoursEnabled, setQuietHoursEnabled] = useState(true);
+  const [quietHoursStart, setQuietHoursStart] = useState('21:00');
+  const [quietHoursEnd, setQuietHoursEnd] = useState('07:00');
+
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
 
   const uid = 'demo-asha-worker-01';
+
+  // Reschedule reminders whenever reminder settings change
+  const handleUpdateReminderSettings = async (overrides?: Partial<ReminderSettings>) => {
+    const currentSettings: ReminderSettings = {
+      enabled: overrides?.enabled !== undefined ? overrides.enabled : remindersEnabled,
+      reminderTime: overrides?.reminderTime !== undefined ? overrides.reminderTime : reminderTime,
+      quietHoursStart: quietHoursEnabled ? quietHoursStart : undefined,
+      quietHoursEnd: quietHoursEnabled ? quietHoursEnd : undefined,
+      language,
+    };
+
+    try {
+      const followups = await getFollowUps(uid);
+      await ReminderService.rescheduleAll(followups, currentSettings);
+      showToast('Reminder schedule updated', 'info');
+    } catch (e) {
+      console.warn('Reminder reschedule error:', e);
+    }
+  };
 
   const handleDeleteAll = async () => {
     const confirmPrompt = window.confirm(t.settings.deleteDataConfirm);
@@ -35,6 +62,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     setIsDeleting(true);
     try {
       await deleteAllUserData(uid);
+      await ReminderService.cancelAll();
       showToast(t.settings.deleteSuccess, 'danger');
       onDeleteAllData?.();
     } catch (e) {
@@ -48,6 +76,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     setIsSeeding(true);
     try {
       const res = await seedDatabase(uid);
+      const followups = await getFollowUps(uid);
+      await ReminderService.rescheduleAll(followups, {
+        enabled: remindersEnabled,
+        reminderTime,
+        language,
+      });
+
       const seedSuccessMessages: Record<string, string> = {
         en: `Demo data loaded: ${res.beneficiaries} beneficiaries, ${res.visits} visits.`,
         hi: `डेमो डेटा लोड: ${res.beneficiaries} लाभार्थी, ${res.visits} भेंट।`,
@@ -97,6 +132,92 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             </option>
           ))}
         </select>
+      </Card>
+
+      {/* Reminders & Notifications Settings (Phase 6) */}
+      <Card className="p-3.5 bg-surface border-line space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Bell size={18} className="text-teal-700" />
+            <div>
+              <div className="text-sm font-bold text-ink">Reminders & Daily Schedule</div>
+              <div className="text-xs text-muted">Offline morning briefing & overdue notices</div>
+            </div>
+          </div>
+          <input
+            type="checkbox"
+            checked={remindersEnabled}
+            onChange={(e) => {
+              const val = e.target.checked;
+              setRemindersEnabled(val);
+              handleUpdateReminderSettings({ enabled: val });
+            }}
+            className="w-5 h-5 accent-teal-900 cursor-pointer"
+          />
+        </div>
+
+        {remindersEnabled && (
+          <div className="space-y-2 pt-2 border-t border-line/60">
+            {/* Morning Reminder Time */}
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-ink font-medium">{t.settings.reminderTimeTitle}</span>
+              <input
+                type="time"
+                value={reminderTime}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setReminderTime(val);
+                  handleUpdateReminderSettings({ reminderTime: val });
+                }}
+                className="bg-cream border border-line rounded px-2 py-1 font-semibold text-ink"
+              />
+            </div>
+
+            {/* Quiet Hours */}
+            <div className="flex items-center justify-between text-xs pt-1">
+              <div className="flex items-center gap-1.5 text-muted">
+                <Moon size={14} />
+                <span>Quiet Hours (No alerts)</span>
+              </div>
+              <input
+                type="checkbox"
+                checked={quietHoursEnabled}
+                onChange={(e) => {
+                  setQuietHoursEnabled(e.target.checked);
+                  handleUpdateReminderSettings();
+                }}
+                className="w-4 h-4 accent-teal-900 cursor-pointer"
+              />
+            </div>
+
+            {quietHoursEnabled && (
+              <div className="flex items-center justify-between text-xs text-muted pl-5">
+                <span>Between:</span>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="time"
+                    value={quietHoursStart}
+                    onChange={(e) => {
+                      setQuietHoursStart(e.target.value);
+                      handleUpdateReminderSettings();
+                    }}
+                    className="bg-cream border border-line rounded px-1.5 py-0.5 text-[11px]"
+                  />
+                  <span>to</span>
+                  <input
+                    type="time"
+                    value={quietHoursEnd}
+                    onChange={(e) => {
+                      setQuietHoursEnd(e.target.value);
+                      handleUpdateReminderSettings();
+                    }}
+                    className="bg-cream border border-line rounded px-1.5 py-0.5 text-[11px]"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </Card>
 
       {/* Latency Meter Toggle & Status */}
@@ -188,23 +309,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             </div>
           </div>
         )}
-      </Card>
-
-      {/* Morning Reminder Time */}
-      <Card className="p-3.5 bg-surface border-line flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Bell size={18} className="text-teal-700" />
-          <div>
-            <div className="text-sm font-bold text-ink">{t.settings.reminderTimeTitle}</div>
-            <div className="text-xs text-muted">{t.settings.reminderTimeDesc}</div>
-          </div>
-        </div>
-        <input
-          type="time"
-          value={reminderTime}
-          onChange={(e) => setReminderTime(e.target.value)}
-          className="bg-cream border border-line rounded-lg px-2 py-1 text-xs font-semibold text-ink"
-        />
       </Card>
 
       {/* Seed Demo Data Button */}

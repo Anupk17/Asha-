@@ -4,12 +4,15 @@ import {
   parseSpokenNumber,
   detectCorrection,
   applyVocabularyPostCorrection,
+  generateFollowUpsForVisit,
+  autoMarkFollowUpsDoneOnVisit,
   type BeneficiaryType,
   type Visit,
 } from '@asha/shared';
 import { getT, SupportedLanguage } from '../i18n';
 import { extractVisitData, ExtractedVisitData } from '../utils/extractionClient';
-import { saveVisit, saveFollowUp } from '../data/repository';
+import { saveVisit, saveFollowUp, getFollowUps, getBeneficiaries } from '../data/repository';
+import { ReminderService } from '../utils/reminderService';
 
 export type AgentStep =
   | 'IDLE'
@@ -452,42 +455,34 @@ export const useAgentStore = create<AgentStoreState>((set, get) => ({
       // Save visit to Firestore / local cache
       await saveVisit(userId, visitData);
 
-      // Create urgent follow-up task if danger flags exist
-      if (draftRecord.danger_flags.length > 0) {
-        await saveFollowUp(userId, {
-          id: `fu-danger-${Date.now()}`,
-          visit_id: visitId,
-          beneficiary_id: visitData.beneficiary_id,
-          beneficiary_name: visitData.beneficiary_name || '',
-          beneficiary_code: visitData.beneficiary_code || '',
-          village: visitData.village || '',
-          type: 'Urgent Danger Sign Referral',
-          due_date: new Date().toISOString().split('T')[0],
-          status: 'pending',
-          source: 'visit_record',
-          guideline_ref: 'MoHFW Maternal Health Danger Signs',
-          is_danger_referral: true,
-          created_at: new Date().toISOString(),
-        });
+      // Load existing follow-ups & beneficiaries to calculate guideline schedules
+      const existingFollowups = await getFollowUps(userId);
+      const allBeneficiaries = await getBeneficiaries(userId);
+      const matchedBeneficiary = allBeneficiaries.find(
+        (b) => b.code === visitData.beneficiary_code || b.id === visitData.beneficiary_id
+      );
+
+      // 1. Auto-mark existing pending follow-ups for this beneficiary as done
+      const markedList = autoMarkFollowUpsDoneOnVisit(existingFollowups, visitData);
+      for (const item of markedList) {
+        if (item.status === 'done' && existingFollowups.find((f) => f.id === item.id)?.status !== 'done') {
+          await saveFollowUp(userId, item);
+        }
       }
 
-      // Create scheduled follow-up for next visit date
-      if (draftRecord.next_visit_date) {
-        await saveFollowUp(userId, {
-          id: `fu-sched-${Date.now()}`,
-          visit_id: visitId,
-          beneficiary_id: visitData.beneficiary_id,
-          beneficiary_name: visitData.beneficiary_name || '',
-          beneficiary_code: visitData.beneficiary_code || '',
-          village: visitData.village || '',
-          type: `${draftRecord.visit_type || 'ANC'} Follow-up`,
-          due_date: draftRecord.next_visit_date,
-          status: 'pending',
-          source: 'guideline_schedule',
-          guideline_ref: 'MoHFW ANC Schedule',
-          created_at: new Date().toISOString(),
-        });
+      // 2. Generate new follow-up tasks from guidelines, vaccinations, next visit date, & danger check
+      const generatedTasks = generateFollowUpsForVisit({
+        visit: visitData,
+        beneficiary: matchedBeneficiary,
+        existingFollowUps: markedList,
+      });
+
+      for (const task of generatedTasks) {
+        await saveFollowUp(userId, task);
       }
+
+      // 3. Reschedule offline reminders
+      ReminderService.rescheduleAll([...markedList, ...generatedTasks]);
 
       const nextDateStr = draftRecord.next_visit_date || 'next week';
       const savedMsg = t.agentDialogue.saved(nextDateStr);

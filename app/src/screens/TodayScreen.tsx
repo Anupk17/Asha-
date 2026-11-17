@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Sun } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, Sun, Mic, Volume2, X } from 'lucide-react';
 import { DateStrip, DateItem } from '../components/ui/DateStrip';
 import { TimelineItem } from '../components/ui/TimelineItem';
 import { Banner } from '../components/ui/Banner';
 import { SyncBadge } from '../components/ui/SyncBadge';
-import { FollowUp } from '@asha/shared';
+import { FollowUp, updateFollowUpStatuses } from '@asha/shared';
 import { getFollowUps, markFollowUpDone } from '../data/repository';
 import { useAppStore } from '../store/appStore';
 import { getT } from '../i18n';
+import { ReminderService } from '../utils/reminderService';
+import { processVoiceQuery, VoiceQueryResult } from '../utils/voiceQueries';
+import { VoicePipeline } from '../utils/audioPipeline';
 
 export interface TodayScreenProps {
   onStartRecord: () => void;
@@ -24,25 +27,30 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({
   const [selectedDate, setSelectedDate] = useState('2026-11-16');
   const [followups, setFollowups] = useState<FollowUp[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [voiceQueryActive, setVoiceQueryActive] = useState(false);
+  const [voiceResult, setVoiceResult] = useState<VoiceQueryResult | null>(null);
+  const [isListeningVoiceQuery, setIsListeningVoiceQuery] = useState(false);
 
   const uid = 'demo-asha-worker-01';
+  const pipelineRef = useRef<VoicePipeline | null>(null);
 
   const loadFollowUps = async () => {
-    setIsLoading(true);
     try {
-      const data = await getFollowUps(uid);
-      setFollowups(data);
+      const rawData = await getFollowUps(uid);
+      // Auto-update pending to overdue when due_date has passed
+      const updated = updateFollowUpStatuses(rawData, selectedDate);
+      setFollowups(updated);
+
+      // Reschedule offline local notifications whenever follow-ups change
+      ReminderService.rescheduleAll(updated, undefined, selectedDate);
     } catch (e) {
-      console.error(e);
-    } finally {
-      setIsLoading(false);
+      console.error('Error loading follow-ups:', e);
     }
   };
 
   useEffect(() => {
     loadFollowUps();
-  }, []);
+  }, [selectedDate]);
 
   // Multi-language day labels
   const dayNames: Record<string, [string, string, string, string, string, string, string]> = {
@@ -62,20 +70,64 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({
     { date: new Date('2026-11-14'), dateString: '2026-11-14', dayLabel: days[1], dayNumber: 14, isToday: false, hasItems: true, hasDanger: true },
     { date: new Date('2026-11-15'), dateString: '2026-11-15', dayLabel: days[2], dayNumber: 15, isToday: false, hasItems: true, hasDanger: true },
     { date: new Date('2026-11-16'), dateString: '2026-11-16', dayLabel: days[3], dayNumber: 16, isToday: true, hasItems: true, hasDanger: false },
-    { date: new Date('2026-11-17'), dateString: '2026-11-17', dayLabel: days[4], dayNumber: 17, isToday: false, hasItems: false },
+    { date: new Date('2026-11-17'), dateString: '2026-11-17', dayLabel: days[4], dayNumber: 17, isToday: false, hasItems: true },
     { date: new Date('2026-11-18'), dateString: '2026-11-18', dayLabel: days[5], dayNumber: 18, isToday: false, hasItems: true },
     { date: new Date('2026-11-19'), dateString: '2026-11-19', dayLabel: days[6], dayNumber: 19, isToday: false, hasItems: false },
   ];
 
   const handleMarkDone = async (id: string) => {
     await markFollowUpDone(uid, id);
-    setFollowups((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, status: 'done' as const } : item))
-    );
+    const updated = followups.map((item) => (item.id === id ? { ...item, status: 'done' as const } : item));
+    setFollowups(updated);
+    ReminderService.rescheduleAll(updated, undefined, selectedDate);
     showToast(t.today.doneToast, 'success');
   };
 
-  const filtered = followups.filter((f) =>
+  // Voice Query Execution Handler
+  const handleVoiceQuerySubmit = async (queryText: string) => {
+    const result = processVoiceQuery(queryText, followups, language, selectedDate);
+    setVoiceResult(result);
+    setVoiceQueryActive(true);
+
+    // If marked done by voice ("Meena ka visit ho gaya")
+    if (result.type === 'mark_done' && result.markedDoneTask) {
+      await handleMarkDone(result.markedDoneTask.id);
+    }
+
+    // Play TTS response
+    const relayUrl = import.meta.env.VITE_RELAY_URL || 'http://localhost:8080';
+    if (!pipelineRef.current) {
+      pipelineRef.current = new VoicePipeline({});
+      await pipelineRef.current.connect(relayUrl, 'mock-jwt-token-for-dev');
+    }
+    pipelineRef.current.requestTts(result.spokenResponse, language);
+  };
+
+  const handleMicVoiceQueryToggle = () => {
+    if (isListeningVoiceQuery) {
+      pipelineRef.current?.stopRecording();
+      setIsListeningVoiceQuery(false);
+    } else {
+      setIsListeningVoiceQuery(true);
+      const relayUrl = import.meta.env.VITE_RELAY_URL || 'http://localhost:8080';
+      const pipeline = new VoicePipeline({
+        onFinalTranscript: (text) => {
+          setIsListeningVoiceQuery(false);
+          handleVoiceQuerySubmit(text);
+        },
+        onError: () => setIsListeningVoiceQuery(false),
+      });
+      pipelineRef.current = pipeline;
+      pipeline.connect(relayUrl, 'mock-jwt-token-for-dev').then(() => {
+        pipeline.startRecording(language);
+      });
+    }
+  };
+
+  // Filter tasks based on Search Query or Voice Query Result
+  const activeList = voiceResult ? voiceResult.matchedTasks : followups;
+
+  const filtered = activeList.filter((f) =>
     f.beneficiary_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     f.village.toLowerCase().includes(searchQuery.toLowerCase()) ||
     f.beneficiary_code.toLowerCase().includes(searchQuery.toLowerCase())
@@ -84,6 +136,7 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({
   const dangerItems = filtered.filter((f) => f.is_danger_referral && f.status !== 'done');
   const overdueItems = filtered.filter((f) => f.status === 'overdue' && !f.is_danger_referral);
   const todayItems = filtered.filter((f) => f.due_date === selectedDate && f.status !== 'done' && !f.is_danger_referral);
+  const upcomingItems = filtered.filter((f) => f.due_date > selectedDate && f.status !== 'done' && !f.is_danger_referral);
   const doneItems = filtered.filter((f) => f.status === 'done');
 
   return (
@@ -102,6 +155,43 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({
           </div>
         </div>
         <SyncBadge status="synced" onRefresh={loadFollowUps} />
+      </div>
+
+      {/* Voice Assistant Query Bar */}
+      <div className="p-3 bg-teal-100/70 border border-teal-700/20 rounded-card flex items-center justify-between gap-2 shadow-sm">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <Volume2 size={18} className="text-teal-900 shrink-0" />
+          <span className="text-xs text-teal-900 font-medium truncate">
+            {voiceResult ? voiceResult.spokenResponse : 'Ask: "Aaj kiske follow-up pending hain?"'}
+          </span>
+        </div>
+
+        {voiceResult && (
+          <button
+            type="button"
+            onClick={() => {
+              setVoiceResult(null);
+              setVoiceQueryActive(false);
+            }}
+            className="p-1 text-teal-900 hover:bg-teal-200/50 rounded-full"
+            title="Clear voice query"
+          >
+            <X size={15} />
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={handleMicVoiceQueryToggle}
+          className={`p-2 rounded-full border transition-all ${
+            isListeningVoiceQuery
+              ? 'bg-danger text-white border-danger animate-pulse'
+              : 'bg-teal-700 text-white border-teal-900 hover:bg-teal-900'
+          }`}
+          title="Voice query"
+        >
+          <Mic size={16} />
+        </button>
       </div>
 
       {/* Quick Search */}
@@ -124,7 +214,10 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({
         <DateStrip
           dates={dateStripItems}
           selectedDate={selectedDate}
-          onSelectDate={setSelectedDate}
+          onSelectDate={(d) => {
+            setSelectedDate(d);
+            setVoiceResult(null);
+          }}
         />
       </div>
 
@@ -140,17 +233,24 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({
 
       {/* Timeline Section */}
       <div className="space-y-4 pt-1">
-        {/* Danger referrals pinned first */}
-        {dangerItems.map((item) => (
-          <TimelineItem
-            key={item.id}
-            item={item}
-            onMarkDone={handleMarkDone}
-            onClick={onOpenFollowUp}
-          />
-        ))}
+        {/* 1. Danger referrals pinned first in danger style */}
+        {dangerItems.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-danger px-1">
+              <span>⚠️ Urgent Referral Checks ({dangerItems.length})</span>
+            </div>
+            {dangerItems.map((item) => (
+              <TimelineItem
+                key={item.id}
+                item={item}
+                onMarkDone={handleMarkDone}
+                onClick={onOpenFollowUp}
+              />
+            ))}
+          </div>
+        )}
 
-        {/* Overdue Section */}
+        {/* 2. Overdue Section (Saffron style) */}
         {overdueItems.length > 0 && (
           <div className="space-y-2">
             <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-saffron-500 px-1">
@@ -167,7 +267,7 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({
           </div>
         )}
 
-        {/* Today's Tasks */}
+        {/* 3. Today's Tasks */}
         <div className="space-y-2">
           <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-900 px-1">
             <span>{t.today.dueTodaySection(todayItems.length)}</span>
@@ -188,7 +288,24 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({
           )}
         </div>
 
-        {/* Completed Section */}
+        {/* 4. Upcoming Tasks */}
+        {upcomingItems.length > 0 && (
+          <div className="space-y-2 pt-2">
+            <div className="text-xs font-semibold text-muted uppercase tracking-wider px-1">
+              Upcoming Visits ({upcomingItems.length})
+            </div>
+            {upcomingItems.map((item) => (
+              <TimelineItem
+                key={item.id}
+                item={item}
+                onMarkDone={handleMarkDone}
+                onClick={onOpenFollowUp}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* 5. Completed Section */}
         {doneItems.length > 0 && (
           <div className="space-y-2 pt-2">
             <div className="text-xs font-semibold text-muted px-1">

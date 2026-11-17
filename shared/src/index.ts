@@ -84,9 +84,28 @@ export { evaluateDangerSigns, DANGER_RULES } from './danger/engine.js';
 export { parseSpokenNumber, validateMeasurementSanity, isClinicallyValid } from './normalisers/numbers.js';
 export { parseRelativeDate } from './normalisers/dates.js';
 export { detectCorrection } from './normalisers/corrections.js';
+export {
+  addDays,
+  addWeeks,
+  subtractWeeks,
+  getTodayIST,
+  isOverdue,
+  isLeapYear,
+  getDaysInMonth,
+  calculateScheduleDueDate,
+} from './followups/calculator.js';
+export { generateFollowUpsForVisit, SCHEDULES } from './followups/generator.js';
+export {
+  updateFollowUpStatuses,
+  autoMarkFollowUpsDoneOnVisit,
+  findFollowUpByVoiceCommand,
+} from './followups/status.js';
 
 export * from './vocab.js';
 export * from './danger/engine.js';
 export * from './normalisers/numbers.js';
 export * from './normalisers/dates.js';
 export * from './normalisers/corrections.js';
+export * from './followups/calculator.js';
+export * from './followups/generator.js';
+export * from './followups/status.js';

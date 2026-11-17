@@ -1,0 +1,249 @@
+[
+  {
+    "id": "hbnc_inst_day3",
+    "applies_to": ["newborn"],
+    "category": "hbnc",
+    "title": "HBNC Visit 1 (Day 3)",
+    "description": "First post-discharge home visit for institutional delivery to assess feeding, warmth, cord, and danger signs.",
+    "offset_rule": {
+      "type": "days",
+      "value": 3,
+      "anchor": "date_of_birth"
+    },
+    "guideline_ref": {
+      "guideline_id": "mohfw_hbnc_2014",
+      "section": "3.2",
+      "page": "24",
+      "version": "2014"
+    },
+    "reviewed": false
+  },
+  {
+    "id": "hbnc_inst_day7",
+    "applies_to": ["newborn"],
+    "category": "hbnc",
+    "title": "HBNC Visit 2 (Day 7)",
+    "description": "Assessment of jaundice, weight gain, temperature regulation, and umbilical cord hygiene.",
+    "offset_rule": {
+      "type": "days",
+      "value": 7,
+      "anchor": "date_of_birth"
+    },
+    "guideline_ref": {
+      "guideline_id": "mohfw_hbnc_2014",
+      "section": "3.2",
+      "page": "24",
+      "version": "2014"
+    },
+    "reviewed": false
+  },
+  {
+    "id": "hbnc_inst_day14",
+    "applies_to": ["newborn"],
+    "category": "hbnc",
+    "title": "HBNC Visit 3 (Day 14)",
+    "description": "Evaluation of neonatal feeding progress, birth weight regain check, and danger sign screening.",
+    "offset_rule": {
+      "type": "days",
+      "value": 14,
+      "anchor": "date_of_birth"
+    },
+    "guideline_ref": {
+      "guideline_id": "mohfw_hbnc_2014",
+      "section": "3.2",
+      "page": "24",
+      "version": "2014"
+    },
+    "reviewed": false
+  },
+  {
+    "id": "hbnc_inst_day21",
+    "applies_to": ["newborn"],
+    "category": "hbnc",
+    "title": "HBNC Visit 4 (Day 21)",
+    "description": "Routine home visit to check exclusive breastfeeding, temperature, eye/skin infection checks.",
+    "offset_rule": {
+      "type": "days",
+      "value": 21,
+      "anchor": "date_of_birth"
+    },
+    "guideline_ref": {
+      "guideline_id": "mohfw_hbnc_2014",
+      "section": "3.2",
+      "page": "24",
+      "version": "2014"
+    },
+    "reviewed": false
+  },
+  {
+    "id": "hbnc_inst_day28",
+    "applies_to": ["newborn"],
+    "category": "hbnc",
+    "title": "HBNC Visit 5 (Day 28)",
+    "description": "End of neonatal period assessment, growth monitoring, and immunization preparation for 6 weeks.",
+    "offset_rule": {
+      "type": "days",
+      "value": 28,
+      "anchor": "date_of_birth"
+    },
+    "guideline_ref": {
+      "guideline_id": "mohfw_hbnc_2014",
+      "section": "3.2",
+      "page": "24",
+      "version": "2014"
+    },
+    "reviewed": false
+  },
+  {
+    "id": "hbnc_inst_day42",
+    "applies_to": ["newborn"],
+    "category": "hbnc",
+    "title": "HBNC Visit 6 (Day 42 / 6 Weeks)",
+    "description": "6-week checkup coinciding with UIP 6-week immunization session and maternal postpartum recovery.",
+    "offset_rule": {
+      "type": "days",
+      "value": 42,
+      "anchor": "date_of_birth"
+    },
+    "guideline_ref": {
+      "guideline_id": "mohfw_hbnc_2014",
+      "section": "3.2",
+      "page": "24",
+      "version": "2014"
+    },
+    "reviewed": false
+  },
+  {
+    "id": "anc_contact_2",
+    "applies_to": ["pregnant"],
+    "category": "anc",
+    "title": "ANC Checkup 2 (14–26 Weeks)",
+    "description": "Second trimester antenatal contact: IFA tablet distribution, TT injection, abdominal exam.",
+    "offset_rule": {
+      "type": "weeks_before_edd",
+      "value": 20,
+      "anchor": "expected_delivery_date"
+    },
+    "guideline_ref": {
+      "guideline_id": "mohfw_anc_2018",
+      "section": "2.1",
+      "page": "12",
+      "version": "2018"
+    },
+    "reviewed": false
+  },
+  {
+    "id": "anc_contact_3",
+    "applies_to": ["pregnant"],
+    "category": "anc",
+    "title": "ANC Checkup 3 (28–34 Weeks)",
+    "description": "Third trimester contact: BP, severe anaemia screening, fetal growth, birth preparedness plan.",
+    "offset_rule": {
+      "type": "weeks_before_edd",
+      "value": 10,
+      "anchor": "expected_delivery_date"
+    },
+    "guideline_ref": {
+      "guideline_id": "mohfw_anc_2018",
+      "section": "2.1",
+      "page": "12",
+      "version": "2018"
+    },
+    "reviewed": false
+  },
+  {
+    "id": "anc_contact_4",
+    "applies_to": ["pregnant"],
+    "category": "anc",
+    "title": "ANC Checkup 4 (36–40 Weeks)",
+    "description": "Near-term contact: identify obstetric complications, institutional delivery logistics, emergency transport.",
+    "offset_rule": {
+      "type": "weeks_before_edd",
+      "value": 4,
+      "anchor": "expected_delivery_date"
+    },
+    "guideline_ref": {
+      "guideline_id": "mohfw_anc_2018",
+      "section": "2.1",
+      "page": "12",
+      "version": "2018"
+    },
+    "reviewed": false
+  },
+  {
+    "id": "uip_session_6w",
+    "applies_to": ["newborn", "child"],
+    "category": "immunisation",
+    "title": "UIP 6-Week Immunization Session",
+    "description": "Administer Pentavalent-1, OPV-1, Rotavirus-1, fIPV-1, PCV-1 vaccines.",
+    "offset_rule": {
+      "type": "days",
+      "value": 42,
+      "anchor": "date_of_birth"
+    },
+    "guideline_ref": {
+      "guideline_id": "mohfw_uip_2023",
+      "section": "Infant Schedule",
+      "page": "1",
+      "version": "2023"
+    },
+    "reviewed": false
+  },
+  {
+    "id": "uip_session_10w",
+    "applies_to": ["newborn", "child"],
+    "category": "immunisation",
+    "title": "UIP 10-Week Immunization Session",
+    "description": "Administer Pentavalent-2, OPV-2, Rotavirus-2 vaccines.",
+    "offset_rule": {
+      "type": "days",
+      "value": 70,
+      "anchor": "date_of_birth"
+    },
+    "guideline_ref": {
+      "guideline_id": "mohfw_uip_2023",
+      "section": "Infant Schedule",
+      "page": "1",
+      "version": "2023"
+    },
+    "reviewed": false
+  },
+  {
+    "id": "uip_session_14w",
+    "applies_to": ["newborn", "child"],
+    "category": "immunisation",
+    "title": "UIP 14-Week Immunization Session",
+    "description": "Administer Pentavalent-3, OPV-3, Rotavirus-3, fIPV-2, PCV-2 vaccines.",
+    "offset_rule": {
+      "type": "days",
+      "value": 98,
+      "anchor": "date_of_birth"
+    },
+    "guideline_ref": {
+      "guideline_id": "mohfw_uip_2023",
+      "section": "Infant Schedule",
+      "page": "1",
+      "version": "2023"
+    },
+    "reviewed": false
+  },
+  {
+    "id": "uip_session_9m",
+    "applies_to": ["child"],
+    "category": "immunisation",
+    "title": "UIP 9-Month Immunization Session",
+    "description": "Administer Measles Rubella (MR-1), JE-1, PCV Booster, Vitamin A dose 1.",
+    "offset_rule": {
+      "type": "days",
+      "value": 270,
+      "anchor": "date_of_birth"
+    },
+    "guideline_ref": {
+      "guideline_id": "mohfw_uip_2023",
+      "section": "Infant Schedule",
+      "page": "1",
+      "version": "2023"
+    },
+    "reviewed": false
+  }
+]
