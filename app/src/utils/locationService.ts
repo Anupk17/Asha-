@@ -160,3 +160,4 @@ export function openNavigationApp(lat: number, lng: number, label?: string): voi
     window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
   }
 }
+

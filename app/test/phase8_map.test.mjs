@@ -72,3 +72,4 @@ test('phase 8 map: computeNearestNeighbourRoute safely handles households with n
   assert.strictEqual(route.length, 1);
   assert.strictEqual(route[0].item.id, 'h-1');
 });
+
