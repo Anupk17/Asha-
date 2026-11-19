@@ -6,6 +6,7 @@ import {
   detectCorrection,
   isClinicallyValid,
   applyVocabularyPostCorrection,
+  evaluateNoAdviceGuard,
   BeneficiaryType,
 } from '@asha/shared';
 
@@ -39,6 +40,8 @@ export interface ExtractResponse {
   }>;
   raw_entities: Record<string, any>;
   is_correction: boolean;
+  is_blocked_medical_advice?: boolean;
+  medical_advice_refusal?: string;
 }
 
 const SYSTEM_PROMPT = `You are a clinical data extraction assistant for an Indian ASHA (Accredited Social Health Activist) community health register.
@@ -186,6 +189,9 @@ function extractWithHeuristics(transcript: string, beneficiaryType?: Beneficiary
 export async function extractRecord(req: ExtractRequest): Promise<ExtractResponse> {
   const correctedTranscript = applyVocabularyPostCorrection(req.transcript);
 
+  // Safety pre-check: Block medical advice, drug prescriptions, and treatment queries
+  const safetyCheck = evaluateNoAdviceGuard(correctedTranscript, (req.language as any) || 'en');
+
   // Check if utterance is a field correction ("no, weight is 2.8 kilo")
   const correction = detectCorrection(correctedTranscript);
 
@@ -329,5 +335,7 @@ export async function extractRecord(req: ExtractRequest): Promise<ExtractRespons
     followups_to_create,
     raw_entities: rawExtracted,
     is_correction: correction.isCorrection,
+    is_blocked_medical_advice: safetyCheck.isBlocked,
+    medical_advice_refusal: safetyCheck.isBlocked ? safetyCheck.refusalMessage : undefined,
   };
 }

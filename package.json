@@ -11,8 +11,9 @@
   "scripts": {
     "dev:app": "npm --workspace=app run dev",
     "dev:relay": "npm --workspace=relay run dev",
-    "build": "npm --workspace=shared run build && npm --workspace=relay run build && npm --workspace=app run build",
-    "test": "npm --workspace=shared test && npm --workspace=relay test && npm --workspace=app test"
+    "governance:check": "node scripts/verify-governance.mjs",
+    "build": "npm run governance:check && npm --workspace=shared run build && npm --workspace=relay run build && npm --workspace=app run build",
+    "test": "npm run governance:check && node --test test/*.test.mjs && npm --workspace=shared test && npm --workspace=relay test && npm --workspace=app test"
   },
   "devDependencies": {
     "typescript": "^5.7.2"

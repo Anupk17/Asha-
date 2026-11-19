@@ -147,7 +147,7 @@ export function evaluateDangerSigns(input: ExtractedVisitInput): DangerMatchResu
             ruleId: rule.id,
           });
         }
-        if (field === 'breaths_per_min' && (normText.includes('fast breath') || normText.includes('saans tez') || normText.includes('pasli') || normText.includes('haaf'))) {
+        if (field === 'breaths_per_min' && (normText.includes('fast breath') || normText.includes('saans tez') || normText.includes('tez saans') || normText.includes('pasli') || normText.includes('haaf'))) {
           unknownMeasurements.push({
             field: 'breaths_per_min',
             clarifyingQuestion: 'How many breaths per minute were counted?',

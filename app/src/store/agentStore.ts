@@ -9,6 +9,7 @@ import {
   autoMarkFollowUpsDoneOnVisit,
   matchIncentiveActivity,
   checkMissingRequiredFields,
+  evaluateNoAdviceGuard,
   type BeneficiaryType,
   type Visit,
 } from '@asha/shared';
@@ -223,6 +224,17 @@ export const useAgentStore = create<AgentStoreState>((set, get) => ({
     const clean = text.trim().toLowerCase();
 
     set({ transcript: text, isListening: false });
+
+    // 0. Safety Pre-check: No-Advice Guard (strictly block medicine, treatment & diagnosis requests)
+    const safetyCheck = evaluateNoAdviceGuard(text, language);
+    if (safetyCheck.isBlocked) {
+      set({
+        agentSpokenText: safetyCheck.refusalMessage,
+        isAgentSpeaking: true,
+      });
+      if (speakTts) speakTts(safetyCheck.refusalMessage);
+      return;
+    }
 
     // 1. Check Global Speech Commands
     if (/^(cancel|radd|band karo|exit|radd karo)/i.test(clean)) {
