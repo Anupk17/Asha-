@@ -248,10 +248,52 @@ export async function extractRecord(req: ExtractRequest): Promise<ExtractRespons
           rawExtracted = toolUse.input;
         }
       } else {
-        console.warn('Anthropic API returned error, falling back to heuristics:', response.status);
+        console.warn('Anthropic API returned error, checking Gemini/heuristics:', response.status);
       }
     } catch (err) {
-      console.warn('Failed to call Anthropic API, falling back to heuristics:', err);
+      console.warn('Failed to call Anthropic API, checking Gemini/heuristics:', err);
+    }
+  }
+
+  // Free alternative: Google Gemini 1.5 / 2.0 Flash (Free tier at aistudio.google.com)
+  const geminiKey = (config as any).GEMINI_API_KEY;
+  const isLiveGeminiKey = geminiKey && geminiKey.length > 20 && !geminiKey.startsWith('mock_') && !geminiKey.startsWith('dev_');
+
+  if (!rawExtracted && isLiveGeminiKey) {
+    try {
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
+      const response = await fetch(geminiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                {
+                  text: `${SYSTEM_PROMPT}\n\nTask: Extract structured visit record in JSON.\nInput note: "${correctedTranscript}"`,
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            response_mime_type: 'application/json',
+            temperature: 0.1,
+          },
+        }),
+      });
+
+      if (response.ok) {
+        const data: any = await response.json();
+        const rawJsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (rawJsonText) {
+          rawExtracted = JSON.parse(rawJsonText);
+        }
+      } else {
+        console.warn('Gemini API returned error, falling back to heuristics:', response.status);
+      }
+    } catch (err) {
+      console.warn('Gemini API call failed, falling back to heuristics:', err);
     }
   }
 

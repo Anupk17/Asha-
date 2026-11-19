@@ -5,9 +5,10 @@ dotenv.config();
 
 const envSchema = z.object({
   PORT: z.coerce.number().default(8080),
-  ALLOWED_ORIGINS: z.string().default("http://localhost:5173"),
-  GNANI_API_KEY: z.string().min(1, "GNANI_API_KEY is required in relay/.env"),
-  ANTHROPIC_API_KEY: z.string().min(1, "ANTHROPIC_API_KEY is required in relay/.env"),
+  ALLOWED_ORIGINS: z.string().default("http://localhost:5174,http://localhost:5173"),
+  GNANI_API_KEY: z.string().default("dev_placeholder_gnani_key"),
+  ANTHROPIC_API_KEY: z.string().optional().default(""),
+  GEMINI_API_KEY: z.string().optional().default(""),
   FIREBASE_SERVICE_ACCOUNT_B64: z.string().optional().default(""),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 });
