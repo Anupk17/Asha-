@@ -11,8 +11,10 @@ import {
 } from '@asha/shared';
 import { getT, type SupportedLanguage } from '../i18n/index.ts';
 import { extractVisitData, ExtractedVisitData } from '../utils/extractionClient';
-import { saveVisit, saveFollowUp, getFollowUps, getBeneficiaries } from '../data/repository';
+import { saveVisit, saveFollowUp, getFollowUps, getBeneficiaries, saveBeneficiary } from '../data/repository';
 import { ReminderService } from '../utils/reminderService';
+import { getCurrentLocation } from '../utils/locationService';
+import { useAppStore } from './appStore';
 
 export type AgentStep =
   | 'IDLE'
@@ -444,6 +446,16 @@ export const useAgentStore = create<AgentStoreState>((set, get) => ({
 
     try {
       const visitId = `visit-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      // Capture GPS location if location sharing is consented
+      const { locationSharing, locationPrecision } = useAppStore.getState();
+      let capturedGeo: { lat: number; lng: number; accuracy?: number } | undefined = undefined;
+      if (locationSharing) {
+        const geoPoint = await getCurrentLocation(locationPrecision);
+        if (geoPoint) {
+          capturedGeo = geoPoint;
+        }
+      }
+
       const visitData: Visit = {
         id: visitId,
         beneficiary_id: draftRecord.beneficiary_code || 'SYN-0001',
@@ -459,6 +471,7 @@ export const useAgentStore = create<AgentStoreState>((set, get) => ({
         danger_flags: draftRecord.danger_flags || [],
         danger_unknowns: draftRecord.danger_unknowns || [],
         rules_version: '2026.11-mohfw',
+        geo: capturedGeo,
         status: 'confirmed',
         created_at: new Date().toISOString(),
         confirmed_at: new Date().toISOString(),
@@ -473,6 +486,12 @@ export const useAgentStore = create<AgentStoreState>((set, get) => ({
       const matchedBeneficiary = allBeneficiaries.find(
         (b) => b.code === visitData.beneficiary_code || b.id === visitData.beneficiary_id
       );
+
+      // If beneficiary doesn't have home_geo and we captured geo, set home_geo
+      if (matchedBeneficiary && !matchedBeneficiary.home_geo && capturedGeo) {
+        matchedBeneficiary.home_geo = capturedGeo;
+        await saveBeneficiary(userId, matchedBeneficiary);
+      }
 
       // 1. Auto-mark existing pending follow-ups for this beneficiary as done
       const markedList = autoMarkFollowUpsDoneOnVisit(existingFollowups, visitData);

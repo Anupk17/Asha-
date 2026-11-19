@@ -16,13 +16,21 @@ export interface SettingsScreenProps {
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   onDeleteAllData,
 }) => {
-  const { language, setLanguage, textSize, setTextSize, showToast } = useAppStore();
+  const {
+    language,
+    setLanguage,
+    textSize,
+    setTextSize,
+    locationSharing,
+    setLocationSharing,
+    locationPrecision,
+    setLocationPrecision,
+    showToast,
+  } = useAppStore();
   const t = getT(language);
 
   const [noiseMode, setNoiseMode] = useState(true);
   const [showLatency, setShowLatency] = useState(true);
-  const [locationSharing, setLocationSharing] = useState(true);
-  const [locationPrecision, setLocationPrecision] = useState<'exact' | 'village'>('village');
   
   // Reminders & Notifications
   const [remindersEnabled, setRemindersEnabled] = useState(true);
