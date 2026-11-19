@@ -299,6 +299,7 @@ export async function extractRecord(req: ExtractRequest): Promise<ExtractRespons
 
   if (!rawExtracted) {
     rawExtracted = extractWithHeuristics(correctedTranscript, req.beneficiaryType);
+    console.log('⚡ Option B Active: Built-in local heuristic & clinical extractor used ($0, zero external LLM calls).');
   }
 
   // Apply in-turn correction if detected
