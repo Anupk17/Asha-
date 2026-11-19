@@ -1,6 +1,21 @@
 import dotenv from "dotenv";
+import path from "path";
+import fs from "fs";
 import { z } from "zod";
 
+// Look for .env in relay/ or project root
+const candidatePaths = [
+  path.resolve(__dirname, "../.env"),
+  path.resolve(__dirname, "../../relay/.env"),
+  path.resolve(process.cwd(), "relay/.env"),
+  path.resolve(process.cwd(), ".env"),
+];
+
+for (const envPath of candidatePaths) {
+  if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath });
+  }
+}
 dotenv.config();
 
 const envSchema = z.object({

@@ -33,6 +33,7 @@ export class GnaniTtsStreamer {
       this.ws = new WebSocket(gnaniUrl, {
         headers: {
           'X-API-Key-ID': config.GNANI_API_KEY,
+          'token': config.GNANI_API_KEY,
         },
       });
 

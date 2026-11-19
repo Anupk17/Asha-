@@ -61,6 +61,7 @@ export class GnaniSttSession {
       this.ws = new WebSocket(gnaniUrl, {
         headers: {
           'X-API-Key-ID': config.GNANI_API_KEY,
+          'token': config.GNANI_API_KEY,
         },
       });
 
@@ -106,34 +107,12 @@ export class GnaniSttSession {
   }
 
   public sendAudioChunk(pcmChunk: Buffer): void {
-    if (this.isDevSimulated) {
-      this.audioBufferCount++;
-      // Provide simulated live partials for testing in dev without live API keys
-      if (this.audioBufferCount === 5) {
-        this.options.onPartial('Meena Devi Rampur');
-      } else if (this.audioBufferCount === 12) {
-        this.options.onPartial('Meena Devi Rampur 54.5 kg weight TT booster');
-      }
-      return;
-    }
-
     if (this.ws && this.isConnected && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(pcmChunk);
     }
   }
 
   public stop(): void {
-    if (this.isDevSimulated && this.audioBufferCount > 0) {
-      const sampleText =
-        this.options.language === 'en'
-          ? 'Conducted ANC visit for Meena Devi Rampur. Weight is 54.5 kg, normal temperature. TT booster due next Monday.'
-          : 'मीना देवी रामपुर का ANC विज़िट किया। वजन 54.5 किलो है, TT booster टीका बाकी है अगली भेंट सोमवार को।';
-      const canonical = applyVocabularyPostCorrection(sampleText);
-      this.options.onFinal(canonical);
-      this.audioBufferCount = 0;
-      return;
-    }
-
     if (this.ws && this.isConnected) {
       try {
         // Send end marker if specified by Gnani or close connection gracefully
