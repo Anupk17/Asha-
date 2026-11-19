@@ -1,0 +1,53 @@
+[
+  {
+    "id": "nhm_anc_full_care",
+    "name": "Full Antenatal Care & Registration",
+    "activity_category": "maternal",
+    "match_visit_types": ["ANC"],
+    "required_fields": ["beneficiary_name", "village", "weight_kg", "next_visit_date"],
+    "source_document": "NHM ASHA Operational Guidelines",
+    "source_section": "Routine Recurrent Activities, Item 1(A)",
+    "reviewed": true
+  },
+  {
+    "id": "nhm_hbnc_home_visits",
+    "name": "Home Based Newborn Care (HBNC Visits)",
+    "activity_category": "newborn",
+    "match_visit_types": ["HBNC", "newborn"],
+    "required_fields": ["beneficiary_name", "weight_kg", "temperature_c", "breaths_per_min"],
+    "source_document": "HBNC Operational Guidelines (Revised)",
+    "source_section": "Incentive Package for ASHA, Section 4.2",
+    "reviewed": true
+  },
+  {
+    "id": "nhm_routine_immunisation",
+    "name": "Complete Routine Immunisation Mobilisation",
+    "activity_category": "child",
+    "match_visit_types": ["immunisation"],
+    "required_fields": ["beneficiary_name", "vaccinations_due"],
+    "source_document": "Universal Immunization Programme (UIP) Guidelines",
+    "source_section": "ASHA Mobilization Incentive, Clause 3",
+    "reviewed": true
+  },
+  {
+    "id": "nhm_emergency_referral_escort",
+    "name": "Prompt Emergency Danger Referral",
+    "activity_category": "emergency",
+    "match_visit_types": ["ANC", "PNC", "HBNC", "newborn", "immunisation"],
+    "required_fields": ["beneficiary_name", "danger_flags"],
+    "requires_danger_flags": true,
+    "source_document": "NHM Maternal Health & Referral Guidelines",
+    "source_section": "Emergency Referral Support, Clause 2.1",
+    "reviewed": true
+  },
+  {
+    "id": "nhm_pnc_postnatal_visit",
+    "name": "Post-Natal Care (PNC) Visit",
+    "activity_category": "maternal",
+    "match_visit_types": ["PNC"],
+    "required_fields": ["beneficiary_name", "temperature_c", "weight_kg"],
+    "source_document": "NHM RMNCH+A Guidelines",
+    "source_section": "Postnatal Care Visit Package, Section 3",
+    "reviewed": true
+  }
+]

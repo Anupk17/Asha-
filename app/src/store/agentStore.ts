@@ -2,10 +2,13 @@ import { create } from 'zustand';
 import {
   evaluateDangerSigns,
   parseSpokenNumber,
+  parseRelativeDate,
   detectCorrection,
   applyVocabularyPostCorrection,
   generateFollowUpsForVisit,
   autoMarkFollowUpsDoneOnVisit,
+  matchIncentiveActivity,
+  checkMissingRequiredFields,
   type BeneficiaryType,
   type Visit,
 } from '@asha/shared';
@@ -302,6 +305,38 @@ export const useAgentStore = create<AgentStoreState>((set, get) => ({
         return;
       }
 
+      // Priority 4: Activity-specific required fields from NHM Incentive guidelines
+      const activity = matchIncentiveActivity(updatedRecord as any);
+      if (activity) {
+        const missingFields = checkMissingRequiredFields(updatedRecord as any, activity);
+        if (missingFields.includes('breaths_per_min')) {
+          const question = t.agentDialogue.askMissing.breaths;
+          set({
+            step: 'ASK_MISSING',
+            missingField: 'breaths',
+            draftRecord: updatedRecord,
+            agentSpokenText: question,
+            isAgentSpeaking: true,
+            retryCount: 0,
+          });
+          if (speakTts) speakTts(question);
+          return;
+        }
+        if (missingFields.includes('next_visit_date')) {
+          const question = t.agentDialogue.askMissing.nextVisitDate;
+          set({
+            step: 'ASK_MISSING',
+            missingField: 'nextVisitDate',
+            draftRecord: updatedRecord,
+            agentSpokenText: question,
+            isAgentSpeaking: true,
+            retryCount: 0,
+          });
+          if (speakTts) speakTts(question);
+          return;
+        }
+      }
+
       // All essential items present -> proceed to CONFIRM_READBACK
       set({ draftRecord: updatedRecord });
       buildAndSpeakReadback(updatedRecord, language, set, speakTts);
@@ -326,6 +361,9 @@ export const useAgentStore = create<AgentStoreState>((set, get) => ({
         if (parsed !== null) updated.breaths_per_min = Math.round(parsed);
       } else if (missingField === 'beneficiary') {
         updated.beneficiary_name = text.trim();
+      } else if (missingField === 'nextVisitDate') {
+        const parsedDate = parseRelativeDate(text);
+        if (parsedDate) updated.next_visit_date = parsedDate;
       }
 
       // Re-run danger engine with the newly provided measurement

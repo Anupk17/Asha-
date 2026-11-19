@@ -3,7 +3,7 @@ import { Banner } from '../components/ui/Banner';
 import { FieldRow } from '../components/ui/FieldRow';
 import { Button } from '../components/ui/Button';
 import { Chip } from '../components/ui/Chip';
-import { Volume2, CheckCircle2, RotateCcw, AlertTriangle, User, Calendar, Scale, Syringe, Thermometer, Wind } from 'lucide-react';
+import { Volume2, CheckCircle2, RotateCcw, AlertTriangle, User, Calendar, Scale, Syringe, Thermometer, Wind, Share2 } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
 import { useAgentStore } from '../store/agentStore';
 import { getT } from '../i18n';
@@ -98,6 +98,43 @@ export const ConfirmScreen: React.FC<ConfirmScreenProps> = ({
   const handleReRecord = () => {
     reRecord();
     onRetake();
+  };
+
+  const handleShareFamilyReminder = async () => {
+    if (!draftRecord.next_visit_date) {
+      showToast('No next visit date scheduled', 'info');
+      return;
+    }
+
+    const messages: Record<string, string> = {
+      en: `Namaste! Next home visit for ${localizedName} by ASHA Didi: ${draftRecord.next_visit_date}. Thank you.`,
+      hi: `नमस्ते! आशा दीदी द्वारा ${localizedName} की अगली गृह-भेंट तारीख: ${draftRecord.next_visit_date}। धन्यवाद।`,
+      ta: `வணக்கம்! ஆஷா தீதி மூலமாக ${localizedName} அடுத்த இல்லப் பார்வை தேதி: ${draftRecord.next_visit_date}. நன்றி.`,
+      te: `నమస్కారం! ఆశా దీదీ ద్వారా ${localizedName} తదుపరి గృహ సందర్శన తేదీ: ${draftRecord.next_visit_date}. ధన్యవాదాలు.`,
+      kn: `ನಮಸ್ಕಾರ! ಆಶಾ ದೀದಿಯವರಿಂದ ${localizedName} ಮುಂದಿನ ಮನೆ ಭೇಟಿ ದಿನಾಂಕ: ${draftRecord.next_visit_date}. ಧನ್ಯವಾದಗಳು.`,
+      ml: `നമസ്കാരം! ആശാ ദീദിയുടെ ${localizedName} അടുത്ത ഭവന സന്ദർശന തീയതി: ${draftRecord.next_visit_date}. നന്ദി.`,
+      mr: `नमस्ते! आशा दीदींकडून ${localizedName} पुढील गृहभेट तारीख: ${draftRecord.next_visit_date}। धन्यवाद.`,
+    };
+
+    const text = messages[language] || messages.en;
+
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: 'ASHA Home Visit Reminder',
+          text,
+        });
+        showToast('Visit reminder shared', 'success');
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          await navigator.clipboard.writeText(text);
+          showToast('Reminder copied to clipboard', 'info');
+        }
+      }
+    } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      await navigator.clipboard.writeText(text);
+      showToast('Reminder copied to clipboard', 'info');
+    }
   };
 
   return (
@@ -238,6 +275,18 @@ export const ConfirmScreen: React.FC<ConfirmScreenProps> = ({
         >
           {t.confirm.reRecord}
         </Button>
+
+        {draftRecord.next_visit_date && (
+          <Button
+            variant="secondary"
+            size="md"
+            fullWidth
+            icon={<Share2 size={18} className="text-teal-700" />}
+            onClick={handleShareFamilyReminder}
+          >
+            Share next visit date
+          </Button>
+        )}
       </div>
 
       {/* Tap-to-Edit Modal */}

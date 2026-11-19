@@ -100,6 +100,15 @@ export {
   autoMarkFollowUpsDoneOnVisit,
   findFollowUpByVoiceCommand,
 } from './followups/status.js';
+export {
+  matchIncentiveActivity,
+  checkMissingRequiredFields,
+  computeMonthlyLedger,
+  INCENTIVE_ACTIVITIES,
+  type IncentiveActivity,
+  type IncompleteRecord,
+  type MonthlyLedgerSummary,
+} from './incentives.js';
 
 export * from './vocab.js';
 export * from './danger/engine.js';
@@ -109,3 +118,4 @@ export * from './normalisers/corrections.js';
 export * from './followups/calculator.js';
 export * from './followups/generator.js';
 export * from './followups/status.js';
+export * from './incentives.js';
