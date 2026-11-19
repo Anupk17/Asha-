@@ -26,3 +26,4 @@ test('Rule governance: refuses build if any incentive activity has reviewed:fals
     assert.ok(item.source_section, `Incentive ${item.id} must cite official source_section`);
   }
 });
+

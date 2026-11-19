@@ -81,3 +81,4 @@ test('Clinical No-Advice Guard allows legitimate visit notes without medical adv
     assert.strictEqual(res.isBlocked, false, `Legitimate note was falsely blocked: "${note}"`);
   }
 });
+

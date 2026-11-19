@@ -25,3 +25,4 @@ test('Consent screen and DPDP data minimisation across all 7 languages', () => {
     assert.ok(t.settings.disclaimerMedical.length > 0, `disclaimerMedical missing for ${lang}`);
   }
 });
+

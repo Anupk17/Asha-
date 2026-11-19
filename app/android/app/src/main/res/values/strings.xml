@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ASHA Voice Register</string>
+    <string name="title_activity_main">ASHA Voice Register</string>
+    <string name="package_name">org.asha.voiceregister</string>
+    <string name="custom_url_scheme">org.asha.voiceregister</string>
+</resources>

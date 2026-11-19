@@ -70,3 +70,4 @@ if (errors.length > 0) {
 
 console.log('✅ Rule Governance verified: All rules are reviewed and cite official MoHFW/NHM guidelines.\n');
 process.exit(0);
+

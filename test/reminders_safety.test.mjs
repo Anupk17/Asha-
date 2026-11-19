@@ -37,3 +37,4 @@ test('Reminder wording safety review: polite, supportive, zero pressure or punit
   assert.match(reminderFile, /Please visit when convenient/i, 'Must be respectful of ASHA workload');
   assert.match(reminderFile, /Gentle Reminder/i, 'Must frame notices as gentle reminders');
 });
+

@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: asha-relay
+    env: node
+    plan: standard
+    buildCommand: npm install && npm run build
+    startCommand: node relay/dist/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: ALLOWED_ORIGINS
+        value: "*"
+      - key: GNANI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: FIREBASE_SERVICE_ACCOUNT_B64
+        sync: false
